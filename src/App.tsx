@@ -52,7 +52,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isGuest) return;
 
     const unsubProfile = onSnapshot(doc(db, 'users', user.uid), 
       (docSnap) => {
@@ -64,14 +64,17 @@ export default function App() {
         setLoading(false);
       },
       (error) => {
-        console.error("Profile snapshot error:", error);
-        toast.error("Error loading account data");
+        // Only log if not a "permission-denied" in guest mode (safety check)
+        if (!isGuest) {
+          console.error("Profile snapshot error:", error);
+          toast.error("Error loading account data");
+        }
         setLoading(false);
       }
     );
 
     return () => unsubProfile();
-  }, [user?.uid]);
+  }, [user?.uid, isGuest]);
 
   const handleSignIn = async () => {
     if (signingIn) return;
@@ -109,9 +112,14 @@ export default function App() {
       total_score: 1000,
       inventory: ['item_1'],
       setupComplete: true,
-      lastMissionReset: new Date().toISOString(),
+      lastMissionUpdate: new Date().toISOString(),
       missions: [],
       best_display: 'Explorer',
+      best_stars: 0,
+      best_sort_key: 0,
+      avatar: 'student_1',
+      activeBadge: null,
+      email: 'guest@example.com'
     };
     
     setUser(guestUser);
@@ -187,7 +195,7 @@ export default function App() {
       case 'ai': return <AIPlatform profile={profile!} />;
       case 'quiz': return <ThemeSelection profile={profile!} onSelect={(theme, mode) => setQuizConfig({ theme, mode })} />;
       case 'vocab': return <VocabBank profile={profile!} />;
-      case 'leaderboard': return <Leaderboard currentUserId={user.uid} />;
+      case 'leaderboard': return <Leaderboard currentUserId={user.uid} isGuest={isGuest} />;
       case 'shop': return <Shop profile={profile!} />;
       case 'profile': return <Profile user={user} profile={profile} isSetup={false} />;
       default: return <Dashboard profile={profile} setActiveTab={setActiveTab} onStartQuiz={() => setActiveTab('quiz')} />;

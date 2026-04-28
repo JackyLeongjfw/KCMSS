@@ -10,22 +10,77 @@ import CharacterPreview from './CharacterPreview';
 
 interface LeaderboardProps {
   currentUserId: string;
+  isGuest?: boolean;
 }
 
-export default function Leaderboard({ currentUserId }: LeaderboardProps) {
+export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filter, setFilter] = useState<'global' | 'class'>('global');
   const [myClass, setMyClass] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Get current user's class
-    const userRef = query(collection(db, 'users'), where('id', '==', currentUserId));
-    // Simplified for now, in App.tsx we have the profile anyway
-  }, [currentUserId]);
+  const MOCK_LEADERBOARD: UserProfile[] = [
+    {
+      id: 'mock_1',
+      englishName: 'Emma Watson',
+      className: '6A',
+      classNo: '01',
+      total_score: 5500,
+      inventory: [],
+      setupComplete: true,
+      lastMissionUpdate: '',
+      missions: [],
+      best_display: 'Grandmaster (S1)',
+      best_stars: 3,
+      best_sort_key: 0,
+      avatar: 'student_2',
+      activeBadge: '🏆',
+      email: 'emma@example.com'
+    },
+    {
+      id: 'mock_2',
+      englishName: 'John Doe',
+      className: '6A',
+      classNo: '02',
+      total_score: 4800,
+      inventory: [],
+      setupComplete: true,
+      lastMissionUpdate: '',
+      missions: [],
+      best_display: 'Expert',
+      best_stars: 2,
+      best_sort_key: 0,
+      avatar: 'student_3',
+      activeBadge: '⭐',
+      email: 'john@example.com'
+    },
+    {
+      id: 'guest_user',
+      englishName: 'Guest Student (You)',
+      className: 'GUEST',
+      classNo: '00',
+      total_score: 1000,
+      inventory: [],
+      setupComplete: true,
+      lastMissionUpdate: '',
+      missions: [],
+      best_display: 'Explorer',
+      best_stars: 0,
+      best_sort_key: 0,
+      avatar: 'student_1',
+      activeBadge: null,
+      email: 'guest@example.com'
+    }
+  ];
 
   useEffect(() => {
+    if (isGuest) {
+      setUsers(MOCK_LEADERBOARD.sort((a, b) => b.total_score - a.total_score));
+      return;
+    }
+
     const q = query(
       collection(db, 'users'), 
+      where('setupComplete', '==', true),
       orderBy('total_score', 'desc'), 
       limit(50)
     );
@@ -36,13 +91,15 @@ export default function Leaderboard({ currentUserId }: LeaderboardProps) {
         setUsers(userData);
       },
       (error) => {
-        console.error("Leaderboard snapshot error:", error);
-        toast.error("Failed to load leaderboard");
+        if (!isGuest) {
+          console.error("Leaderboard snapshot error:", error);
+          toast.error("Failed to load leaderboard");
+        }
       }
     );
 
     return () => unsubscribe();
-  }, [filter]);
+  }, [filter, isGuest]);
 
   return (
     <div className="space-y-4">

@@ -34,13 +34,18 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
 
   useEffect(() => {
+    if (profile.id === 'guest_user') {
+      setUserVocab([]);
+      return;
+    }
+
     const fetchUserVocab = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'users', profile.id, 'vocabulary'));
         const words = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VocabCard));
         setUserVocab(words);
       } catch (e) {
-        console.error(e);
+        console.error("Vocab fetch error:", e);
       }
     };
     fetchUserVocab();
@@ -111,6 +116,10 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   };
 
   const saveEdit = async (card: VocabCard) => {
+    if (profile.id === 'guest_user') {
+      toast.error("Saving changes to Word Bank is not available in Guest mode.");
+      return;
+    }
     try {
       const vocabRef = doc(db, 'users', profile.id, 'vocabulary', card.word.toLowerCase());
       await setDoc(vocabRef, {

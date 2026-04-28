@@ -43,13 +43,18 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
   const { updateMissionProgress } = useMissions(profile);
 
   useEffect(() => {
+    if (profile.id === 'guest_user') return;
+
     const q = query(
       collection(db, 'users', profile.id, 'analyses'),
       orderBy('createdAt', 'desc')
     );
-    return onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       setHistory(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavedAnalysis)));
+    }, (error) => {
+      console.error("AI History snapshot error:", error);
     });
+    return () => unsubscribe();
   }, [profile.id]);
 
   const handleTestPronunciation = async (text: string) => {
@@ -74,10 +79,13 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
       setActiveTab('reading');
       toast.success("Essay analyzed successfully!");
       
-      const docRef = doc(db, 'users', profile.id);
-      await updateDoc(docRef, {
-        total_score: (profile.total_score || 0) + 50
-      });
+      // Only update cloud if not a guest
+      if (profile.id !== 'guest_user') {
+        const docRef = doc(db, 'users', profile.id);
+        await updateDoc(docRef, {
+          total_score: (profile.total_score || 0) + 50
+        });
+      }
 
       // Mission Progress: Analysis
       updateMissionProgress('analysis', 1);
@@ -92,6 +100,10 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
 
   const saveAnalysis = async () => {
     if (!result || !essay) return;
+    if (profile.id === 'guest_user') {
+      toast.error("Analysis history is not available in Guest mode.");
+      return;
+    }
     try {
       const analysesRef = collection(db, 'users', profile.id, 'analyses');
       await addDoc(analysesRef, {
@@ -117,6 +129,10 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
 
   const addToBank = async () => {
     if (!showAddModal) return;
+    if (profile.id === 'guest_user') {
+      toast.error("Cloud Word Bank is not available in Guest mode.");
+      return;
+    }
     const theme = newTheme.trim() || selectedTheme;
     if (!theme) {
       toast.error("Please select or create a theme");

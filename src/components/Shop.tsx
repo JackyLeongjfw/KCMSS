@@ -16,6 +16,10 @@ export default function Shop({ profile }: ShopProps) {
   const [buying, setBuying] = useState<string | null>(null);
 
   const handleBuy = async (item: ShopItem) => {
+    if (profile.id === 'guest_user') {
+      toast.error("Shop is not available in Guest mode.");
+      return;
+    }
     const isOwned = profile.inventory.includes(item.id);
     
     if (isOwned) {

@@ -44,6 +44,12 @@ export default function Profile({ user, profile, isSetup, onComplete }: ProfileP
 
     setSaving(true);
     try {
+      if (user.uid === 'guest_user') {
+        toast.success("Guest profile updated locally (Changes won't be saved)");
+        if (onComplete) onComplete();
+        return;
+      }
+
       const data: Partial<UserProfile> = {
         englishName: form.englishName,
         className: form.className.toUpperCase(),
