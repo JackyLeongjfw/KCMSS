@@ -15,43 +15,26 @@ service cloud.firestore {
 
     // 2. Validation Blueprints
     function isValidUser(data) {
-      return data.englishName is string && data.englishName.size() <= 100
-        && (data.className is string || !data.keys().hasAll(['className']))
-        && (data.classNo is string || !data.keys().hasAll(['classNo']))
-        && (data.total_score is number || !data.keys().hasAll(['total_score']))
-        && (data.setupComplete is bool || !data.keys().hasAll(['setupComplete']));
+      return (!data.keys().hasAll(['englishName']) || (data.englishName is string && data.englishName.size() <= 100))
+        && (!data.keys().hasAll(['className']) || (data.className is string && data.className.size() <= 20))
+        && (!data.keys().hasAll(['classNo']) || (data.classNo is string && data.classNo.size() <= 10))
+        && (!data.keys().hasAll(['total_score']) || (data.total_score is number))
+        && (!data.keys().hasAll(['setupComplete']) || (data.setupComplete is bool));
     }
 
     // --- Collections ---
 
     // Users Collection
     match /users/{userId} {
-      // Allow individual profile reads for any signed in user
-      allow get: if isSignedIn();
-      
-      // Allow listing users, but force client to filter by setupComplete to avoid scraping incomplete data
-      allow list: if isSignedIn() && (resource.data.setupComplete == true || userId == request.auth.uid);
+      // Allow individual profile reads (get and list) for any signed in user
+      allow read: if isSignedIn();
       
       allow create: if isOwner(userId) && isValidUser(incoming());
       
-      allow update: if isOwner(userId) && isValidUser(incoming()) && (
-        // Allow updating common fields
-        incoming().diff(existing()).affectedKeys().hasAny([
-          'total_score', 'inventory', 'activeBadge', 'activeSkin', 
-          'activeSuit', 'activeDecoration', 'setupComplete', 
-          'englishName', 'className', 'classNo', 'missions', 
-          'lastMissionUpdate', 'best_display', 'best_stars', 
-          'best_sort_key', 'themeProgress', 'avatar'
-        ])
-      );
+      allow update: if isOwner(userId) && isValidUser(incoming());
 
-      // Analyses Subcollection
-      match /analyses/{analysisId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      // Vocabulary Subcollection
-      match /vocabulary/{vocabId} {
+      // Subcollections
+      match /{allSubcollections=**} {
         allow read, write: if isOwner(userId);
       }
     }

@@ -110,20 +110,22 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     const passed = scorePercent >= 80;
 
     try {
-      const userRef = doc(db, 'users', profile.id);
-      
-      const newProgress = { ...(profile.themeProgress || {}) };
-      const themeLevels = [...(newProgress[theme] || Array(5).fill(0))];
-      themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
-      newProgress[theme] = themeLevels;
-
-      await updateDoc(userRef, {
-        total_score: increment(score),
-        themeProgress: newProgress
-      });
-
       // Mission Progress: Quiz
       updateMissionProgress('quiz', 1);
+
+      if (profile.id !== 'guest_user') {
+        const userRef = doc(db, 'users', profile.id);
+        
+        const newProgress = { ...(profile.themeProgress || {}) };
+        const themeLevels = [...(newProgress[theme] || Array(5).fill(0))];
+        themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
+        newProgress[theme] = themeLevels;
+
+        await updateDoc(userRef, {
+          total_score: increment(score),
+          themeProgress: newProgress
+        });
+      }
 
       toast.success(passed ? "Level Passed with 80%+! 🎉" : `Score: ${scorePercent}%. Need 80% to unlock next level.`);
     } catch (error) {

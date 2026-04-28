@@ -10,10 +10,10 @@ const MISSIONS: Omit<DailyMission, 'current' | 'completed'>[] = [
 
 export function useMissions(profile: UserProfile | null) {
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || profile.id === 'guest_user') return;
 
     const today = new Date().toDateString();
-    const lastUpdate = profile.lastMissionUpdate?.toDate?.()?.toDateString() || '';
+    const lastUpdate = profile.lastMissionUpdate ? new Date(profile.lastMissionUpdate).toDateString() : '';
 
     if (today !== lastUpdate) {
       // Generate 3 random missions for today
@@ -30,12 +30,12 @@ export function useMissions(profile: UserProfile | null) {
       updateDoc(userRef, {
         missions: selectedMissions,
         lastMissionUpdate: serverTimestamp()
-      });
+      }).catch(e => console.error("Auto mission reset failed:", e));
     }
   }, [profile?.id]);
 
   const updateMissionProgress = async (type: DailyMission['type'], amount: number = 1) => {
-    if (!profile || !profile.missions) return;
+    if (!profile || !profile.missions || profile.id === 'guest_user') return 0;
 
     let updatedMissions = [...profile.missions];
     let pointsEarned = 0;
