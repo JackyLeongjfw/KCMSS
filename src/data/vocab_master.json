@@ -1,0 +1,533 @@
+[
+  {
+    "id": "t1_s1_1",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "academic performance",
+    "partOfSpeech": "n. ph.",
+    "meaning": "學業表現",
+    "sentence": "Good academic performance allows students to enter their dream university and gain more future opportunities."
+  },
+  {
+    "id": "t1_s1_2",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "better grades",
+    "partOfSpeech": "n. ph.",
+    "meaning": "更好成績",
+    "sentence": "He started getting better grades after joining the swimming team and managing his time better."
+  },
+  {
+    "id": "t1_s1_3",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "schoolwork",
+    "partOfSpeech": "n.",
+    "meaning": "課業",
+    "sentence": "She finished her schoolwork quickly so that she could join the basketball training session on time."
+  },
+  {
+    "id": "t1_s1_4",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "study habits",
+    "partOfSpeech": "n. ph.",
+    "meaning": "學習習慣",
+    "sentence": "Playing sports regularly helped him develop better study habits and focus in class."
+  },
+  {
+    "id": "t1_s1_5",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "productivity",
+    "partOfSpeech": "n.",
+    "meaning": "生產力",
+    "sentence": "Doing exercise in the morning helps increase my productivity and concentration in lessons."
+  },
+  {
+    "id": "t1_s1_6",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "organized",
+    "partOfSpeech": "adj.",
+    "meaning": "有條理的",
+    "sentence": "She is very organized and plans her study schedule and training timetable carefully."
+  },
+  {
+    "id": "t1_s1_7",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "manage time wisely",
+    "partOfSpeech": "v. ph.",
+    "meaning": "明智地管理時間",
+    "sentence": "Students who play sports often learn how to manage time wisely between schoolwork and training."
+  },
+  {
+    "id": "t1_s1_8",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "follow a routine",
+    "partOfSpeech": "v. ph.",
+    "meaning": "遵守日常規律",
+    "sentence": "I try to follow a routine that includes both studying and practicing football."
+  },
+  {
+    "id": "t1_s1_9",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.1 School and Academic Life",
+    "word": "strike a balance",
+    "partOfSpeech": "v. ph.",
+    "meaning": "取得平衡",
+    "sentence": "He tries to strike a balance between schoolwork, rest, and sports activities."
+  },
+  {
+    "id": "t1_s2_1",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "set a goal",
+    "partOfSpeech": "v. ph.",
+    "meaning": "設定目標",
+    "sentence": "She set a goal to improve her running speed and reached it after weeks of training."
+  },
+  {
+    "id": "t1_s2_2",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "reflect on mistakes",
+    "partOfSpeech": "v. ph.",
+    "meaning": "反思錯誤",
+    "sentence": "It is important to reflect on mistakes after losing a competition to perform better next time."
+  },
+  {
+    "id": "t1_s2_3",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "reflection",
+    "partOfSpeech": "n.",
+    "meaning": "反思",
+    "sentence": "Reflection helps students understand their weaknesses and learn how to improve in the future."
+  },
+  {
+    "id": "t1_s2_4",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "learn from failure",
+    "partOfSpeech": "v. ph.",
+    "meaning": "從失敗中學習",
+    "sentence": "We can learn from failure by identifying what went wrong and trying again with a better plan."
+  },
+  {
+    "id": "t1_s2_5",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "make progress",
+    "partOfSpeech": "v. ph.",
+    "meaning": "取得進步",
+    "sentence": "He can make progress in swimming if he practices every day with his coach."
+  },
+  {
+    "id": "t1_s2_6",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "improve",
+    "partOfSpeech": "v.",
+    "meaning": "改善",
+    "sentence": "My basketball skills improve when I attend intensive training sessions."
+  },
+  {
+    "id": "t1_s2_7",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.2 Learning and Thinking Skills",
+    "word": "achieve",
+    "partOfSpeech": "v.",
+    "meaning": "達成",
+    "sentence": "She wants to achieve her dream of winning a medal through hard work."
+  },
+  {
+    "id": "t1_s3_1",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "confidence",
+    "partOfSpeech": "n.",
+    "meaning": "自信",
+    "sentence": "Playing sports gives me confidence to speak up in class and face new challenges."
+  },
+  {
+    "id": "t1_s3_2",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "self-esteem",
+    "partOfSpeech": "n.",
+    "meaning": "自尊",
+    "sentence": "Winning a match increased his self-esteem and made him feel proud of his effort."
+  },
+  {
+    "id": "t1_s3_3",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "attitude",
+    "partOfSpeech": "n.",
+    "meaning": "態度",
+    "sentence": "She has a positive attitude towards learning, even when she makes mistakes."
+  },
+  {
+    "id": "t1_s3_4",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "positive mindset",
+    "partOfSpeech": "n. ph.",
+    "meaning": "正面思維",
+    "sentence": "A positive mindset helps us stay calm and believe in ourselves during exams."
+  },
+  {
+    "id": "t1_s3_5",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "courage",
+    "partOfSpeech": "n.",
+    "meaning": "勇氣",
+    "sentence": "He showed great courage by joining the football team even though he was a beginner."
+  },
+  {
+    "id": "t1_s3_6",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "patience",
+    "partOfSpeech": "n.",
+    "meaning": "耐心",
+    "sentence": "You need patience to practise a new sport and master the techniques."
+  },
+  {
+    "id": "t1_s3_7",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "resilient",
+    "partOfSpeech": "adj.",
+    "meaning": "有韌性的",
+    "sentence": "She is resilient and keeps trying her best even after losing several games."
+  },
+  {
+    "id": "t1_s3_8",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "perseverance",
+    "partOfSpeech": "n.",
+    "meaning": "毅力",
+    "sentence": "His perseverance helped him complete the marathon despite being tired."
+  },
+  {
+    "id": "t1_s3_9",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "determination",
+    "partOfSpeech": "n.",
+    "meaning": "決心",
+    "sentence": "With strong determination, she trained hard every day to reach her goals."
+  },
+  {
+    "id": "t1_s3_10",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "discipline",
+    "partOfSpeech": "n.",
+    "meaning": "紀律",
+    "sentence": "Sports teach students to follow rules with discipline and control their emotions."
+  },
+  {
+    "id": "t1_s3_11",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "commitment",
+    "partOfSpeech": "n.",
+    "meaning": "投入",
+    "sentence": "His strong commitment to the team made him attend every practice without fail."
+  },
+  {
+    "id": "t1_s3_12",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "maturity",
+    "partOfSpeech": "n.",
+    "meaning": "成熟",
+    "sentence": "He showed maturity by helping his younger teammates and giving useful advice."
+  },
+  {
+    "id": "t1_s3_13",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "independent",
+    "partOfSpeech": "adj.",
+    "meaning": "獨立的",
+    "sentence": "Playing sports helps students become more independent and take care of themselves."
+  },
+  {
+    "id": "t1_s3_14",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.3 Personal Qualities and Growth",
+    "word": "grow as a person",
+    "partOfSpeech": "v. ph.",
+    "meaning": "成長為更好的人",
+    "sentence": "Sports help me grow as a person and learn to face challenges bravely."
+  },
+  {
+    "id": "t1_s4_1",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "captain",
+    "partOfSpeech": "n.",
+    "meaning": "隊長",
+    "sentence": "The captain led the team to victory by encouraging everyone to do their best."
+  },
+  {
+    "id": "t1_s4_2",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "coach",
+    "partOfSpeech": "n.",
+    "meaning": "教練",
+    "sentence": "Our coach teaches us new skills and reminds us to stay focused during practice."
+  },
+  {
+    "id": "t1_s4_3",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "team spirit",
+    "partOfSpeech": "n. ph.",
+    "meaning": "團隊精神",
+    "sentence": "Team spirit helps everyone stay united and support one another."
+  },
+  {
+    "id": "t1_s4_4",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "teamwork",
+    "partOfSpeech": "n.",
+    "meaning": "團隊合作",
+    "sentence": "Effective teamwork allows us to win matches and solve problems together."
+  },
+  {
+    "id": "t1_s4_5",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "work as a team",
+    "partOfSpeech": "v. ph.",
+    "meaning": "團隊合作",
+    "sentence": "We work as a team to plan our strategies before every game."
+  },
+  {
+    "id": "t1_s4_6",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "communicate",
+    "partOfSpeech": "v.",
+    "meaning": "溝通",
+    "sentence": "Good players communicate clearly with teammates to avoid mistakes."
+  },
+  {
+    "id": "t1_s4_7",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "demonstrate leadership",
+    "partOfSpeech": "v. ph.",
+    "meaning": "展現領導才能",
+    "sentence": "She can demonstrate leadership by guiding her team and solving conflicts calmly."
+  },
+  {
+    "id": "t1_s4_8",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "responsible",
+    "partOfSpeech": "adj.",
+    "meaning": "有責任感的",
+    "sentence": "He is responsible for organizing the team’s equipment before each practice."
+  },
+  {
+    "id": "t1_s4_9",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "role model",
+    "partOfSpeech": "n. ph.",
+    "meaning": "榜樣",
+    "sentence": "She is a role model because she always works hard and supports her teammates."
+  },
+  {
+    "id": "t1_s4_10",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "inspire my teammates",
+    "partOfSpeech": "v. ph.",
+    "meaning": "激勵隊友",
+    "sentence": "I use my positive attitude to inspire my teammates to improve."
+  },
+  {
+    "id": "t1_s4_11",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "encourage others",
+    "partOfSpeech": "v. ph.",
+    "meaning": "鼓勵他人",
+    "sentence": "We encourage others when they feel nervous or lose confidence."
+  },
+  {
+    "id": "t1_s4_12",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "show respect",
+    "partOfSpeech": "v. ph.",
+    "meaning": "表現尊重",
+    "sentence": "We show respect to our coach, teammates, and even our opponents."
+  },
+  {
+    "id": "t1_s4_13",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.4 Teamwork and Leadership",
+    "word": "show good sportsmanship",
+    "partOfSpeech": "v. ph.",
+    "meaning": "展現良好運動精神",
+    "sentence": "He tries to show good sportsmanship by congratulating the other team after losing."
+  },
+  {
+    "id": "t1_s5_1",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "practice",
+    "partOfSpeech": "v.",
+    "meaning": "練習",
+    "sentence": "We practice basketball every afternoon to improve our teamwork and skills."
+  },
+  {
+    "id": "t1_s5_2",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "competition",
+    "partOfSpeech": "n.",
+    "meaning": "比賽",
+    "sentence": "The competition was challenging, but we tried our best and enjoyed the experience."
+  },
+  {
+    "id": "t1_s5_3",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "tournament",
+    "partOfSpeech": "n.",
+    "meaning": "錦標賽",
+    "sentence": "Our school joined a football tournament last month and played against strong teams."
+  },
+  {
+    "id": "t1_s5_4",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "face difficulties",
+    "partOfSpeech": "v. ph.",
+    "meaning": "面對困難",
+    "sentence": "We often face difficulties during training, but we never gave up."
+  },
+  {
+    "id": "t1_s5_5",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "overcome many challenges",
+    "partOfSpeech": "v. ph.",
+    "meaning": "克服挑戰",
+    "sentence": "She had to overcome many challenges to prove that hard work brings success."
+  },
+  {
+    "id": "t1_s5_6",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "handle pressure",
+    "partOfSpeech": "v. ph.",
+    "meaning": "應對壓力",
+    "sentence": "Athletes learn to handle pressure during competitions and stay calm under stress."
+  },
+  {
+    "id": "t1_s5_7",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "stay motivated",
+    "partOfSpeech": "v. ph.",
+    "meaning": "保持動力",
+    "sentence": "I stay motivated by setting small goals and celebrating my progress."
+  },
+  {
+    "id": "t1_s5_8",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "stay positive",
+    "partOfSpeech": "v. ph.",
+    "meaning": "保持正面",
+    "sentence": "Even when we lose, we stay positive and support each other."
+  },
+  {
+    "id": "t1_s5_9",
+    "theme": "Theme 1: How sports benefit students",
+    "section": "1.5 Sports and Challenges",
+    "word": "strengthen",
+    "partOfSpeech": "v.",
+    "meaning": "增強",
+    "sentence": "Regular exercise helps strengthen both our body and our willpower."
+  },
+  {
+    "id": "t2_s1_1",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "pressure",
+    "partOfSpeech": "n.",
+    "meaning": "壓力",
+    "sentence": "Many students face intense pressure from their families to excel academically."
+  },
+  {
+    "id": "t2_s1_2",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "stress",
+    "partOfSpeech": "n.",
+    "meaning": "壓力",
+    "sentence": "Stress from trying to fit in with peers can affect a teenager’s mental health."
+  },
+  {
+    "id": "t2_s1_3",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "peer pressure",
+    "partOfSpeech": "n. ph.",
+    "meaning": "同輩壓力",
+    "sentence": "Teenagers often face peer pressure to behave in a certain way to fit in."
+  },
+  {
+    "id": "t2_s1_4",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "anxiety",
+    "partOfSpeech": "n.",
+    "meaning": "焦慮",
+    "sentence": "He felt a lot of anxiety before the big exam."
+  },
+  {
+    "id": "t2_s1_5",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "unrealistic expectations",
+    "partOfSpeech": "n. ph.",
+    "meaning": "不切實際的期望",
+    "sentence": "Some parents have unrealistic expectations for their children's academic results."
+  },
+  {
+    "id": "t2_s1_6",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "academic burden",
+    "partOfSpeech": "n. ph.",
+    "meaning": "學業負擔",
+    "sentence": "The heavy academic burden makes it difficult for students to find time for hobbies."
+  },
+  {
+    "id": "t2_s1_7",
+    "theme": "Theme 2: Pressure from Parents and Peers",
+    "section": "2.1 Sources of pressure",
+    "word": "overwhelmed",
+    "partOfSpeech": "adj.",
+    "meaning": "不知所措的",
+    "sentence": "He felt overwhelmed by the amount of homework assigned this week."
+  }
+]

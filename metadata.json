@@ -1,0 +1,6 @@
+{
+  "name": "KCMSS English Learning Platform",
+  "description": "An AI-powered DSE English preparation app for KCMSS students, featuring essay analysis, high-quality pronunciation tests, and a gamified leaderboard.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}

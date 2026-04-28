@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper: Is Signed In
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Is matching user
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // Master Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Any signed in user can read any profile (for leaderboard)
+      allow get, list: if isSignedIn();
+      
+      // Only owner can create/update their own profile
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+
+      // Vocabulary Subcollection
+      match /vocabulary/{vocabId} {
+        allow read, list, write: if isOwner(userId);
+      }
+    }
+    
+    // Essays Collection
+    match /essays/{essayId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.studentId) || isOwner(resource.data.teacherId));
+      allow create: if isSignedIn() && isOwner(incoming().studentId);
+    }
+  }
+}
