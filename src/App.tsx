@@ -24,6 +24,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [quizConfig, setQuizConfig] = useState<{ theme: string; mode: number } | null>(null);
   const [signingIn, setSigningIn] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   // Initialize missions tracking
   useMissions(profile);
@@ -78,15 +79,45 @@ export default function App() {
     try {
       await signIn();
     } catch (error: any) {
+      console.error("Sign in full error object:", error);
       if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
         // Normal cancellation, do nothing
+      } else if (error.code === 'auth/unauthorized-domain') {
+        toast.error("Domain not authorized! Add 'localhost' to Firebase Console Authorized Domains.");
       } else {
-        console.error("Sign in error:", error);
-        toast.error(`Sign in failed: ${error.message}`);
+        toast.error(`Sign in error (${error.code}): ${error.message}`);
       }
     } finally {
       setSigningIn(false);
     }
+  };
+
+  const handleGuestMode = () => {
+    setIsGuest(true);
+    const guestUser = {
+      uid: 'guest_user',
+      displayName: 'Guest Student',
+      email: 'guest@example.com',
+      photoURL: null,
+    } as any;
+    
+    const guestProfile: UserProfile = {
+      id: 'guest_user',
+      englishName: 'Guest Student',
+      className: 'GUEST',
+      classNo: '00',
+      total_score: 1000,
+      inventory: ['item_1'],
+      setupComplete: true,
+      lastMissionReset: new Date().toISOString(),
+      missions: [],
+      best_display: 'Explorer',
+    };
+    
+    setUser(guestUser);
+    setProfile(guestProfile);
+    setLoading(false);
+    toast.success("Welcome! Entered Guest Mode (Progress not saved to cloud)");
   };
 
   if (loading) {
@@ -116,10 +147,18 @@ export default function App() {
           <button
             onClick={handleSignIn}
             disabled={signingIn}
-            className="bg-white text-indigo-600 px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors flex items-center gap-2 mx-auto"
+            className="w-full bg-white text-indigo-600 px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 mb-3"
           >
             {signingIn ? 'Signing in...' : 'Sign in with School Email'}
           </button>
+          
+          <button
+            onClick={handleGuestMode}
+            className="w-full bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold border border-indigo-400 hover:bg-indigo-400 transition-colors"
+          >
+            Try as Guest (Demo)
+          </button>
+          
           <p className="mt-4 text-xs text-indigo-200">Only @lstkcmss.edu.hk accounts allowed</p>
         </motion.div>
         <Toaster position="top-center" />
