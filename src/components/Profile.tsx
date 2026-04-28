@@ -17,11 +17,23 @@ interface ProfileProps {
 
 export default function Profile({ user, profile, isSetup, onComplete }: ProfileProps) {
   const [form, setForm] = useState({
-    englishName: profile?.englishName || user.displayName || '',
-    className: profile?.className || '',
-    classNo: profile?.classNo || '',
+    englishName: '',
+    className: '',
+    classNo: '',
   });
   const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    if (profile) {
+      setForm({
+        englishName: profile.englishName || user.displayName || '',
+        className: profile.className || '',
+        classNo: profile.classNo || '',
+      });
+    } else if (user.displayName && !form.englishName) {
+      setForm(prev => ({ ...prev, englishName: user.displayName || '' }));
+    }
+  }, [profile, user.displayName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

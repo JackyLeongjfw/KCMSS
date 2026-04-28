@@ -13,7 +13,7 @@ import Navigation from './components/Navigation';
 import QuizGame from './components/QuizGame';
 import ThemeSelection from './components/ThemeSelection';
 import CharacterPreview from './components/CharacterPreview';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMissions } from './hooks/useMissions';
 
@@ -39,31 +39,38 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (u) => {
+    const unsubAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (u) {
-        // Subscribe to profile updates
-        const unsubscribe = onSnapshot(doc(db, 'users', u.uid), 
-          (docSnap) => {
-            if (docSnap.exists()) {
-              setProfile({ id: u.uid, ...docSnap.data() } as UserProfile);
-            } else {
-              setProfile(null);
-            }
-            setLoading(false);
-          },
-          (error) => {
-            console.error("Profile snapshot error:", error);
-            setLoading(false);
-          }
-        );
-        return () => unsubscribe();
-      } else {
+      if (!u) {
         setProfile(null);
         setLoading(false);
       }
     });
+
+    return () => unsubAuth();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubProfile = onSnapshot(doc(db, 'users', user.uid), 
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setProfile({ id: user.uid, ...docSnap.data() } as UserProfile);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Profile snapshot error:", error);
+        toast.error("Error loading account data");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubProfile();
+  }, [user?.uid]);
 
   const handleSignIn = async () => {
     if (signingIn) return;
@@ -71,8 +78,11 @@ export default function App() {
     try {
       await signIn();
     } catch (error: any) {
-      if (error.code !== 'auth/cancelled-popup-request') {
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+        // Normal cancellation, do nothing
+      } else {
         console.error("Sign in error:", error);
+        toast.error(`Sign in failed: ${error.message}`);
       }
     } finally {
       setSigningIn(false);
@@ -118,7 +128,7 @@ export default function App() {
   }
 
   if (user && (!profile || !profile.setupComplete)) {
-    return <Profile user={user} profile={profile} isSetup={true} onComplete={() => window.location.reload()} />;
+    return <Profile user={user} profile={profile} isSetup={true} />;
   }
 
   const renderContent = () => {

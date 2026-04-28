@@ -8,7 +8,8 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
-  hd: 'lstkcmss.edu.hk'
+  hd: 'lstkcmss.edu.hk',
+  prompt: 'select_account'
 });
 
 export const signIn = () => signInWithPopup(auth, googleProvider);
