@@ -291,10 +291,10 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
             <div className="flex gap-3">
               <button
                 onClick={handleAnalyze}
-                disabled={analyzing || essay.length < 50}
+                disabled={analyzing || essay.length < 10}
                 className={cn(
                   "flex-1 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]",
-                  analyzing || essay.length < 50 ? "bg-slate-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100"
+                  analyzing || essay.length < 10 ? "bg-slate-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100"
                 )}
               >
                 {analyzing ? (

@@ -39,6 +39,48 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
+  const handleFinish = async () => {
+    if (!profile) return;
+    const scorePercent = Math.round((correctCount / questions.length) * 100);
+    const passed = scorePercent >= 80;
+
+    try {
+      // Mission Progress: Quiz
+      updateMissionProgress('quiz', 1);
+
+      if (profile.id !== 'guest_user') {
+        const userRef = doc(db, 'users', profile.id);
+        
+        const newProgress = { ...(profile.themeProgress || {}) };
+        const themeLevels = [...(newProgress[theme] || Array(5).fill(0))];
+        themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
+        newProgress[theme] = themeLevels;
+
+        const accuracyBonus = scorePercent === 100 ? 50 : 0;
+        const totalPoints = score + accuracyBonus;
+        
+        // XP calculation: 1 XP per point
+        const totalXP = (profile.xp || 0) + totalPoints;
+        // Level logic: Level = Floor(Sqrt(XP/100)) + 1
+        const newLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
+
+        if (accuracyBonus > 0) toast.success("Perfect Score! +50 Accuracy Bonus ✨");
+
+        await updateDoc(userRef, {
+          total_score: increment(totalPoints),
+          xp: totalXP,
+          level: newLevel,
+          themeProgress: newProgress
+        });
+      }
+
+      toast.success(passed ? "Level Passed with 80%+! 🎉" : `Score: ${scorePercent}%. Need 80% to unlock next level.`);
+    } catch (error) {
+      console.error(error);
+    }
+    onFinish();
+  };
+
   const handleAnswer = async (answer: string) => {
     if (answered) return;
     stopTimer();
@@ -110,48 +152,6 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     }
     return () => stopTimer();
   }, [currentIndex, questions]);
-
-  const handleFinish = async () => {
-    const scorePercent = Math.round((correctCount / questions.length) * 100);
-    const passed = scorePercent >= 80;
-
-    try {
-      // Mission Progress: Quiz
-      updateMissionProgress('quiz', 1);
-
-      if (profile.id !== 'guest_user') {
-        const userRef = doc(db, 'users', profile.id);
-        
-        const newProgress = { ...(profile.themeProgress || {}) };
-        const themeLevels = [...(newProgress[theme] || Array(5).fill(0))];
-        themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
-        newProgress[theme] = themeLevels;
-
-        const accuracyBonus = scorePercent === 100 ? 50 : 0;
-        const totalPoints = score + accuracyBonus;
-        
-        // XP calculation: 1 XP per point
-        const totalXP = (profile.xp || 0) + totalPoints;
-        // Level logic: Level = Floor(Sqrt(XP/100)) + 1
-        // Level 2: 400 XP, Level 3: 900 XP, Level 4: 1600 XP, Level 5: 2500 XP, etc.
-        const newLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
-
-        if (accuracyBonus > 0) toast.success("Perfect Score! +50 Accuracy Bonus ✨");
-
-        await updateDoc(userRef, {
-          total_score: increment(totalPoints),
-          xp: totalXP,
-          level: newLevel,
-          themeProgress: newProgress
-        });
-      }
-
-      toast.success(passed ? "Level Passed with 80%+! 🎉" : `Score: ${scorePercent}%. Need 80% to unlock next level.`);
-    } catch (error) {
-      console.error(error);
-    }
-    onFinish();
-  };
 
   if (questions.length === 0) return null;
 
