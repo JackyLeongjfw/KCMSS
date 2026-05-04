@@ -3,12 +3,11 @@ import vocabData from '../data/vocab_master.json';
 import { UserProfile, EssaySuggestion } from '../types';
 import { analyzeEssay } from '../services/geminiService';
 import { usePronunciation } from '../hooks/usePronunciation';
-import { Sparkles, Send, Volume2, Languages, Book, Mic, CheckCircle2, X, Plus, History, Trash2, ChevronRight, Bookmark } from 'lucide-react';
+import { Sparkles, Send, Volume2, Book, Mic, CheckCircle2, X, Plus, History, Trash2, Bookmark } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
-import ReactMarkdown from 'react-markdown';
-import { doc, getDoc, updateDoc, arrayUnion, serverTimestamp, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useMissions } from '../hooks/useMissions';
 
