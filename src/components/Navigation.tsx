@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, BookOpen, Trophy, ShoppingBag, User } from 'lucide-react';
+import { Home, Sparkles, BookOpen, Swords, Trophy, ShoppingBag, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
@@ -13,6 +13,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'ai', icon: Sparkles, label: 'AI Assistance' },
     { id: 'vocab', icon: BookOpen, label: 'Revision' },
+    { id: 'battle', icon: Swords, label: 'Arena' },
     { id: 'leaderboard', icon: Trophy, label: 'Ranking' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
     { id: 'profile', icon: User, label: 'Me' },

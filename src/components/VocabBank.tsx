@@ -13,6 +13,10 @@ interface RevisionCenterProps {
   profile: UserProfile;
 }
 
+const numericalSort = (a: string, b: string) => {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+};
+
 export default function VocabBank({ profile }: RevisionCenterProps) {
   const [editingCard, setEditingCard] = useState<VocabCard | null>(null);
   const [sessionPage, setSessionPage] = useState<'list' | 'config' | 'session'>('list');
@@ -70,6 +74,8 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     acc[card.theme][card.section || 'General'].push(card);
     return acc;
   }, {} as Record<string, Record<string, VocabCard[]>>);
+
+  const sortedThemes = Object.keys(groupedData).sort(numericalSort);
 
   const toggleTheme = (theme: string) => {
     setExpandedThemes(prev => ({ ...prev, [theme]: !prev[theme] }));
@@ -142,8 +148,38 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     }
   };
 
+  const updateFamiliarity = async (card: VocabCard, status: 'forgot' | 'mastered') => {
+    if (profile.id === 'guest_user') return;
+    try {
+      const vocabRef = doc(db, 'users', profile.id, 'vocabulary', card.word.toLowerCase());
+      await setDoc(vocabRef, {
+        ...card,
+        familiarity: status,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      
+      setUserVocab(prev => {
+        const idx = prev.findIndex(v => v.word.toLowerCase() === card.word.toLowerCase());
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], familiarity: status };
+          return updated;
+        }
+        return [...prev, { ...card, familiarity: status }];
+      });
+    } catch (e) {
+      console.error("Familiarity update error:", e);
+    }
+  };
+
   if (sessionPage === 'session') {
-    return <RevisionSession cards={sessionCards} onExit={() => setSessionPage('list')} speak={speak} testPronunciation={testPronunciation} />;
+    return <RevisionSession 
+      cards={sessionCards} 
+      onExit={() => setSessionPage('list')} 
+      speak={speak} 
+      testPronunciation={testPronunciation} 
+      onAction={updateFamiliarity}
+    />;
   }
 
   if (sessionPage === 'config') {
@@ -181,8 +217,8 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Filter by Theme</label>
             <div className="space-y-1 max-h-40 overflow-y-auto px-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50">
-              {Array.from(new Set(combinedVocab.map(v => v.theme))).map(theme => (
-                <label key={theme} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
+              {Array.from(new Set(combinedVocab.map(v => v.theme))).sort(numericalSort).map(theme => (
+                <label key={theme} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors text-[11px] font-bold text-slate-700">
                   <input 
                     type="checkbox" 
                     checked={sessionConfig.themes.includes(theme)}
@@ -194,7 +230,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                     }}
                     className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-[11px] font-bold text-slate-700 leading-tight">{theme}</span>
+                  {theme}
                 </label>
               ))}
             </div>
@@ -202,8 +238,8 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
 
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Filter by Module</label>
-            <div className="space-y-1 max-h-40 overflow-y-auto px-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50">
-              {Array.from(new Set(combinedVocab.filter(v => sessionConfig.themes.includes(v.theme)).map(v => v.section || 'General'))).map(section => (
+            <div className="space-y-1 max-h-40 overflow-y-auto px-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50 text-[11px] font-bold text-slate-700">
+              {Array.from(new Set(combinedVocab.filter(v => sessionConfig.themes.includes(v.theme)).map(v => v.section || 'General'))).sort(numericalSort).map(section => (
                 <label key={section} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
                   <input 
                     type="checkbox" 
@@ -216,7 +252,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                     }}
                     className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-[11px] font-bold text-slate-700 leading-tight">{section}</span>
+                  {section}
                 </label>
               ))}
             </div>
@@ -271,7 +307,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
       <div className="space-y-4">
         {search ? (
           <div className="space-y-2">
-            {filteredData.map((card) => (
+            {filteredData.sort((a,b) => numericalSort(a.theme, b.theme)).map((card) => (
               <VocabItem 
                 key={card.id || card.word} 
                 card={card} 
@@ -282,43 +318,50 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
             ))}
           </div>
         ) : (
-          Object.entries(groupedData).map(([theme, sections]) => (
-            <div key={theme} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-              <button
-                onClick={() => toggleTheme(theme)}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition-colors"
-              >
-                <h4 className="font-bold text-slate-800 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
-                  {theme}
-                </h4>
-                <div className="bg-slate-100 p-1.5 rounded-xl">
-                  {expandedThemes[theme] ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
-                </div>
-              </button>
-              
-              {expandedThemes[theme] && (
-                <div className="px-6 pb-6 space-y-6">
-                  {Object.entries(sections).map(([section, cards]) => (
-                    <div key={section} className="space-y-2">
-                      <h5 className="text-[10px] font-black text-indigo-700 uppercase tracking-widest px-1 italic">
-                        {section}
-                      </h5>
-                      {cards.map((card) => (
-                        <VocabItem 
-                          key={card.id || card.word} 
-                          card={card} 
-                          speak={speak} 
-                          isSynthesizing={isSynthesizing} 
-                          onEdit={() => setEditingCard(card)}
-                        />
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))
+          sortedThemes.map((theme) => {
+            const sections = groupedData[theme];
+            const sortedSections = Object.keys(sections).sort(numericalSort);
+            return (
+              <div key={theme} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
+                <button
+                  onClick={() => toggleTheme(theme)}
+                  className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                    {theme}
+                  </h4>
+                  <div className="bg-slate-100 p-1.5 rounded-xl">
+                    {expandedThemes[theme] ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+                  </div>
+                </button>
+                
+                {expandedThemes[theme] && (
+                  <div className="px-6 pb-6 space-y-6">
+                    {sortedSections.map((section) => {
+                      const cards = sections[section];
+                      return (
+                        <div key={section} className="space-y-2">
+                          <h5 className="text-[10px] font-black text-indigo-700 uppercase tracking-widest px-1 italic">
+                            {section}
+                          </h5>
+                          {cards.map((card) => (
+                            <VocabItem 
+                              key={card.id || card.word} 
+                              card={card} 
+                              speak={speak} 
+                              isSynthesizing={isSynthesizing} 
+                              onEdit={() => setEditingCard(card)}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -385,6 +428,14 @@ function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, s
           <span className="text-[8px] text-slate-400 font-serif font-black uppercase tracking-tighter opacity-80 px-1.5 py-0.5 border border-slate-200 rounded">
             {card.partOfSpeech}
           </span>
+          {card.familiarity && (
+             <span className={cn(
+               "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest",
+               card.familiarity === 'mastered' ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
+             )}>
+               {card.familiarity === 'mastered' ? 'Mastered' : 'Hard'}
+             </span>
+          )}
         </div>
         <p className="text-xs text-slate-500 font-medium leading-tight">{card.meaning}</p>
         <p className="text-[10px] text-slate-400 mt-2 italic line-clamp-1">{card.sentence}</p>
@@ -402,11 +453,18 @@ function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, s
   );
 }
 
-function RevisionSession({ cards, onExit, speak, testPronunciation }: { cards: VocabCard[], onExit: () => void, speak: any, testPronunciation: any }) {
+function RevisionSession({ cards, onExit, speak, testPronunciation, onAction }: { 
+  cards: VocabCard[], 
+  onExit: () => void, 
+  speak: any, 
+  testPronunciation: any,
+  onAction: (card: VocabCard, status: 'forgot' | 'mastered') => Promise<void>
+}) {
+  const [sessionCards, setSessionCards] = useState(cards);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
-  if (cards.length === 0) {
+  if (sessionCards.length === 0) {
     return (
       <div className="fixed inset-0 bg-slate-100 z-50 flex flex-col items-center justify-center p-6">
         <p className="text-slate-500 font-bold mb-4">No words found for this selection.</p>
@@ -415,14 +473,22 @@ function RevisionSession({ cards, onExit, speak, testPronunciation }: { cards: V
     );
   }
 
-  const currentCard = cards[currentIndex];
+  const currentCard = sessionCards[currentIndex];
 
-  const handleNext = () => {
-    if (currentIndex < cards.length - 1) {
+  const handleNextAction = (action: 'forgot' | 'mastered') => {
+    onAction(currentCard, action);
+    
+    if (action === 'forgot') {
+      const updated = [...sessionCards, currentCard];
+      setSessionCards(updated);
+      toast.error("Word added to end of deck", { duration: 1500 });
+    }
+
+    if (currentIndex < sessionCards.length - 1) {
       setCurrentIndex(c => c + 1);
       setFlipped(false);
     } else {
-      toast.success("Daily Session Complete! 🔥");
+      toast.success("Revision Session Complete! 🔥");
       onExit();
     }
   };
@@ -436,31 +502,33 @@ function RevisionSession({ cards, onExit, speak, testPronunciation }: { cards: V
 
   const handlePronunciation = async () => {
     const score = await testPronunciation(currentCard.word);
-    if (score >= 80) toast.success("Perfect Pronunciation!");
-    else toast.error(`Keep practicing! Score: ${score}%`);
+    if (score >= 80) {
+      toast.success("Perfect Pronunciation!");
+      handleNextAction('mastered');
+    } else {
+      toast.error(`Keep practicing! Score: ${score}%`);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-slate-100 z-50 flex flex-col p-6 overflow-hidden">
       <div className="flex justify-between items-center mb-8">
-        <button onClick={onExit} className="p-3 hover:bg-white rounded-2xl text-slate-400 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
+        <button 
+          onClick={onExit} 
+          className="h-10 px-4 bg-white hover:bg-slate-50 rounded-xl text-slate-600 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 border border-slate-200 transition-all shadow-sm active:scale-95"
+        >
           <X className="h-4 w-4" />
-          Exit
+          Exit Session
         </button>
         <div className="text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Card {currentIndex + 1} of {cards.length}</p>
-          <div className="flex gap-1 mt-1 justify-center">
-            {cards.map((_, i) => (
-              <div key={i} className={cn("h-1 rounded-full transition-all", i < currentIndex ? "w-2 bg-indigo-200" : i === currentIndex ? "w-6 bg-indigo-600" : "w-1 bg-slate-200")} />
-            ))}
-          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Card {currentIndex + 1} of {sessionCards.length}</p>
         </div>
-        <button onClick={() => setFlipped(!flipped)} className="p-3 bg-white shadow-sm rounded-2xl text-indigo-600 transition-colors">
-          <RotateCcw className="h-6 w-6" />
+        <button onClick={() => setFlipped(!flipped)} className="w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-slate-200 rounded-xl text-indigo-600 transition-all active:scale-95">
+          <RotateCcw className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center relative">
+      <div className="flex-1 flex flex-col items-center justify-center relative">
         {/* Navigation Arrows */}
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-2 pointer-events-none z-30">
           <button 
@@ -473,19 +541,11 @@ function RevisionSession({ cards, onExit, speak, testPronunciation }: { cards: V
           >
             <ChevronLeft className="h-6 w-6 text-indigo-600" />
           </button>
-          <button 
-            onClick={handleNext}
-            className={cn(
-              "p-4 rounded-full bg-white shadow-xl pointer-events-auto transition-all active:scale-95 hover:bg-indigo-50",
-              "opacity-100"
-            )}
-          >
-            <ChevronRight className="h-6 w-6 text-indigo-600" />
-          </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center perspective-1000 w-full">
+        <div className="flex flex-col items-center justify-center perspective-1000 w-full mb-12">
           <motion.div 
+            key={currentIndex}
             animate={{ rotateY: flipped ? 180 : 0 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             className="relative w-full max-w-[280px] h-[380px] cursor-pointer preserve-3d"
@@ -529,16 +589,16 @@ function RevisionSession({ cards, onExit, speak, testPronunciation }: { cards: V
           </div>
         </motion.div>
 
-        <div className="mt-12 flex gap-4 w-full max-w-sm">
+        <div className="mt-4 flex gap-4 w-full max-w-sm px-4">
           <button 
-            onClick={handleNext} 
-            className="flex-1 bg-white text-slate-800 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-lg border border-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+            onClick={() => handleNextAction('forgot')} 
+            className="flex-1 bg-white text-slate-800 py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-lg border-2 border-slate-100 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             I forgot
             <X className="h-4 w-4 text-red-500" />
           </button>
           <button 
-            onClick={handleNext} 
+            onClick={() => handleNextAction('mastered')} 
             className="flex-1 bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-100 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             Got it

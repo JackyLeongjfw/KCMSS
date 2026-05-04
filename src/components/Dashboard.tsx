@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserProfile } from '../types';
-import { Sparkles, BookText, BookOpen, GraduationCap, ChevronRight, Lock, Target, Gift, CheckCircle2 } from 'lucide-react';
+import { Sparkles, BookText, BookOpen, GraduationCap, ChevronRight, Lock, Target, Gift, CheckCircle2, Swords, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { TEACHER_PASSWORD } from '../constants';
@@ -53,8 +54,47 @@ export default function Dashboard({ profile, setActiveTab, onStartQuiz }: Dashbo
     },
   ];
 
+  const currentLevel = profile?.level || 1;
+  const currentXP = profile?.xp || 0;
+  const nextLevelXP = Math.pow(currentLevel, 2) * 100;
+  const startLevelXP = Math.pow(currentLevel - 1, 2) * 100;
+  const progressPercent = Math.min(100, Math.max(0, ((currentXP - startLevelXP) / (nextLevelXP - startLevelXP)) * 100));
+
   return (
     <div className="space-y-6">
+      {/* Level Card */}
+      <section className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-125 transition-transform duration-700">
+           <GraduationCap className="w-32 h-32" />
+        </div>
+        <div className="relative z-10">
+          <div className="flex justify-between items-end mb-4">
+            <div>
+               <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Current Progress</p>
+               <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Level {currentLevel}</h2>
+            </div>
+            <div className="text-right">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total XP</p>
+               <p className="text-xl font-black text-indigo-700 leading-none mt-1">{currentXP.toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/50 p-0.5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full shadow-[0_0_10px_rgba(79,70,229,0.3)]"
+              />
+            </div>
+            <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest">
+              <span className="text-indigo-400">{currentXP - startLevelXP} XP earned</span>
+              <span className="text-slate-400">{nextLevelXP - currentXP} XP to Level {currentLevel + 1}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Daily Missions */}
       {profile?.missions && (
         <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -96,6 +136,28 @@ export default function Dashboard({ profile, setActiveTab, onStartQuiz }: Dashbo
           </div>
         </section>
       )}
+
+      {/* Battle Arena CTA */}
+      <section 
+        onClick={() => setActiveTab('battle')}
+        className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200 cursor-pointer group relative overflow-hidden"
+      >
+        <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
+           <Swords className="w-40 h-40" />
+        </div>
+        <div className="relative z-10 flex items-center gap-6">
+          <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+            <Zap className="h-8 w-8 text-amber-300" />
+          </div>
+          <div>
+            <h3 className="text-xl font-black italic tracking-tighter uppercase mb-1">Live Battle Arena</h3>
+            <p className="text-indigo-200 text-xs font-medium">Fight 1v1 for double XP and Glory!</p>
+          </div>
+          <div className="ml-auto bg-white/10 p-2 rounded-full">
+            <ChevronRight className="h-6 w-6" />
+          </div>
+        </div>
+      </section>
 
       <div className="flex justify-between items-center px-1">
         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Learning Hub</h3>

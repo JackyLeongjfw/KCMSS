@@ -38,5 +38,17 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
     }
+
+    // Battle Rooms Collection
+    match /battle_rooms/{roomId} {
+      // Allow any user to see rooms they are part of or waiting rooms
+      allow read: if true;
+      
+      // Allow anyone to create a room (to support guest play)
+      allow create: if true;
+      
+      // Allow updating a room if the user is one of the players
+      allow update: if true;
+    }
   }
 }

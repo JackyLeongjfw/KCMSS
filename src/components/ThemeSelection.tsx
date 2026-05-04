@@ -11,7 +11,10 @@ interface ThemeSelectionProps {
 
 export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProps) {
   const [selectedTheme, setSelectedTheme] = React.useState<string | null>(null);
-  const themes = Array.from(new Set(vocabData.map(v => v.theme)));
+  const numericalSort = (a: string, b: string) => {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  };
+  const themes = Array.from(new Set(vocabData.map(v => v.theme))).sort(numericalSort);
   
   const modes = [
     { name: 'L1: Meaning', diff: 'Easy' },

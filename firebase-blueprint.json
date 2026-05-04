@@ -46,6 +46,18 @@
         "vocabularySuggestion": { "type": "array", "items": { "type": "object" } },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "BattleRoom": {
+      "title": "Battle Room",
+      "description": "Live 1v1 vocabulary duel",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string", "enum": ["waiting", "starting", "active", "finished"] },
+        "players": { "type": "array" },
+        "questions": { "type": "array" },
+        "winnerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -60,6 +72,10 @@
     "/essays/{essayId}": {
       "schema": "EssayAnalysis",
       "description": "History of essay analyses"
+    },
+    "/battle_rooms/{roomId}": {
+      "schema": "BattleRoom",
+      "description": "Live multiplayer rooms"
     }
   }
 }

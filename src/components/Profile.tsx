@@ -13,9 +13,10 @@ interface ProfileProps {
   profile?: UserProfile | null;
   isSetup: boolean;
   onComplete?: () => void;
+  onSignOut?: () => void;
 }
 
-export default function Profile({ user, profile, isSetup, onComplete }: ProfileProps) {
+export default function Profile({ user, profile, isSetup, onComplete, onSignOut }: ProfileProps) {
   const [form, setForm] = useState({
     englishName: '',
     className: '',
@@ -188,7 +189,7 @@ export default function Profile({ user, profile, isSetup, onComplete }: ProfileP
           <ChevronRight className="h-4 w-4 text-slate-300" />
         </button>
         <button 
-          onClick={signOut}
+          onClick={onSignOut}
           className="w-full px-6 py-5 flex items-center justify-between hover:bg-red-50 transition-colors group"
         >
           <div className="flex items-center gap-4 text-red-600">

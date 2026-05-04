@@ -27,6 +27,15 @@ export const SHOP_ITEMS: ShopItem[] = [
   
   // Titles & Avatars
   { id: 'title_dse_god', name: 'DSE God', price: 3000, icon: '⚡', category: 'title' },
+  { id: 'title_gram_guru', name: 'Grammar Guru', price: 1500, icon: '✍️', category: 'title' },
+  { id: 'title_vocab_master', name: 'Vocab Master', price: 2000, icon: '📖', category: 'title' },
+  { id: 'title_oxford', name: 'Oxford Scholar', price: 4000, icon: '🎓', category: 'title' },
+  { id: 'title_linguist', name: 'Linguistic Pro', price: 2500, icon: '🗣️', category: 'title' },
+  { id: 'title_legend', name: 'Eng Legend', price: 10000, icon: '💎', category: 'title' },
+  { id: 'title_mythic', name: 'English Deity', price: 50000, icon: '🌟', category: 'title' },
+  { id: 'suit_diamond', name: 'Diamond Armor', price: 25000, icon: '💎', category: 'suit' },
+  { id: 'avatar_dragon', name: 'Mythic Dragon', price: 35000, icon: '🐉', category: 'avatar' },
+  { id: 'badge_immortal', name: 'Immortal Scholar', price: 100000, icon: '♾️', category: 'badge' },
   { id: 'avatar_eagle', name: 'Eagle Eye', price: 1500, icon: '🦅', category: 'avatar' },
   { id: 'avatar_robot', name: 'AI Scholar', price: 2500, icon: '🤖', category: 'avatar' },
 ];

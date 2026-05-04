@@ -81,8 +81,11 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     let points = 0;
     if (isCorrect) {
       const base = mode < 2 ? 5 : mode < 4 ? 10 : 20;
-      const bonus = Math.min(streak * (mode < 2 ? 2 : mode < 4 ? 5 : 10), 100);
-      points = base + bonus;
+      const comboBonus = Math.min(streak * (mode < 2 ? 2 : mode < 4 ? 5 : 10), 100);
+      
+      // Daily Streak Multiplier: +5% per streak day (up to +50%)
+      const streakMult = 1 + (Math.min(profile.streak || 0, 10) * 0.05);
+      points = Math.round((base + comboBonus) * streakMult);
       
       setScore(s => s + points);
       setCorrectCount(c => c + 1);
@@ -121,8 +124,21 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
         newProgress[theme] = themeLevels;
 
+        const accuracyBonus = scorePercent === 100 ? 50 : 0;
+        const totalPoints = score + accuracyBonus;
+        
+        // XP calculation: 1 XP per point
+        const totalXP = (profile.xp || 0) + totalPoints;
+        // Level logic: Level = Floor(Sqrt(XP/100)) + 1
+        // Level 2: 400 XP, Level 3: 900 XP, Level 4: 1600 XP, Level 5: 2500 XP, etc.
+        const newLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
+
+        if (accuracyBonus > 0) toast.success("Perfect Score! +50 Accuracy Bonus ✨");
+
         await updateDoc(userRef, {
-          total_score: increment(score),
+          total_score: increment(totalPoints),
+          xp: totalXP,
+          level: newLevel,
           themeProgress: newProgress
         });
       }
@@ -144,10 +160,10 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
       <div className="flex justify-between items-center px-1">
         <button 
           onClick={onFinish}
-          className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors"
-          title="Quit Quiz"
+          className="h-10 px-4 bg-white hover:bg-slate-50 rounded-xl text-slate-600 font-bold text-[11px] uppercase tracking-widest flex items-center gap-2 border border-slate-200 transition-all shadow-sm active:scale-95"
         >
-          <XCircle className="h-5 w-5" />
+          <XCircle className="h-4 w-4" />
+          Exit Quiz
         </button>
         <div className="flex flex-col items-center">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">SCORE</span>

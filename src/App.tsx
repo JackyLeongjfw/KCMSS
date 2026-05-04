@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, signIn } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { UserProfile } from './types';
 import Dashboard from './components/Dashboard';
 import AIPlatform from './components/AIPlatform';
 import VocabBank from './components/VocabBank';
+import BattleArena from './components/BattleArena';
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Shop from './components/Shop';
@@ -110,6 +111,9 @@ export default function App() {
       className: 'GUEST',
       classNo: '00',
       total_score: 1000,
+      xp: 1000,
+      level: 4,
+      streak: 1,
       inventory: ['item_1'],
       setupComplete: true,
       lastMissionUpdate: new Date().toISOString(),
@@ -127,6 +131,38 @@ export default function App() {
     setLoading(false);
     toast.success("Welcome! Entered Guest Mode (Progress not saved to cloud)");
   };
+
+  // streak check
+  useEffect(() => {
+    if (!profile || isGuest || !user) return;
+
+    const today = new Date().toDateString();
+    const lastActive = profile.lastActive ? new Date(profile.lastActive).toDateString() : '';
+
+    if (today !== lastActive) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toDateString();
+
+      const userRef = doc(db, 'users', user.uid);
+      
+      let newStreak = 1;
+      if (lastActive === yesterdayStr) {
+        newStreak = (profile.streak || 0) + 1;
+        toast.success(`Daily Streak: ${newStreak} Days! 🔥`, { icon: '🔥' });
+      } else if (lastActive === '') {
+        newStreak = 1;
+      } else {
+        toast("Streak reset. Log in daily to maintain it!", { icon: '❄️' });
+        newStreak = 1;
+      }
+
+      updateDoc(userRef, {
+        lastActive: new Date().toISOString(),
+        streak: newStreak
+      }).catch(e => console.error("Streak update failed:", e));
+    }
+  }, [profile?.id]);
 
   if (loading) {
     return (
@@ -175,7 +211,20 @@ export default function App() {
   }
 
   if (user && (!profile || !profile.setupComplete)) {
-    return <Profile user={user} profile={profile} isSetup={true} />;
+    return <Profile 
+      user={user} 
+      profile={profile} 
+      isSetup={true} 
+      onSignOut={() => {
+        if (isGuest) {
+          setIsGuest(false);
+          setUser(null);
+          setProfile(null);
+        } else {
+          auth.signOut();
+        }
+      }} 
+    />;
   }
 
   const renderContent = () => {
@@ -195,9 +244,23 @@ export default function App() {
       case 'ai': return <AIPlatform profile={profile!} />;
       case 'quiz': return <ThemeSelection profile={profile!} onSelect={(theme, mode) => setQuizConfig({ theme, mode })} />;
       case 'vocab': return <VocabBank profile={profile!} />;
+      case 'battle': return <BattleArena profile={profile!} />;
       case 'leaderboard': return <Leaderboard currentUserId={user.uid} isGuest={isGuest} />;
       case 'shop': return <Shop profile={profile!} />;
-      case 'profile': return <Profile user={user} profile={profile} isSetup={false} />;
+      case 'profile': return <Profile 
+        user={user} 
+        profile={profile} 
+        isSetup={false} 
+        onSignOut={() => {
+          if (isGuest) {
+            setIsGuest(false);
+            setUser(null);
+            setProfile(null);
+          } else {
+            auth.signOut();
+          }
+        }} 
+      />;
       default: return <Dashboard profile={profile} setActiveTab={setActiveTab} onStartQuiz={() => setActiveTab('quiz')} />;
     }
   };
@@ -215,9 +278,19 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-indigo-800/50 px-3 py-1.5 rounded-full border border-indigo-500/30 flex items-center gap-1.5">
-            <span className="text-amber-400 font-bold text-xs">🔥 {profile?.total_score || 0}</span>
+        <div className="flex items-center gap-2">
+          <div className="bg-indigo-800/40 px-2.5 py-1 rounded-lg border border-white/10 flex flex-col items-center">
+            <span className="text-[7px] font-black uppercase tracking-tighter opacity-70">Level</span>
+            <span className="text-xs font-black leading-none">{profile?.level || 1}</span>
+          </div>
+
+          <div className="bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 flex flex-col items-center">
+            <span className="text-[7px] font-black text-amber-500 uppercase tracking-tighter">Streak</span>
+            <span className="text-xs font-black text-amber-500 leading-none">{profile?.streak || 0}</span>
+          </div>
+
+          <div className="bg-indigo-800/50 px-3 py-1.5 rounded-full border border-indigo-500/30 flex items-center gap-1.5 ml-1">
+            <span className="text-amber-400 font-bold text-xs">{profile?.total_score?.toLocaleString() || 0}</span>
             <span className="text-[8px] uppercase font-bold tracking-tighter opacity-70">PTS</span>
           </div>
           

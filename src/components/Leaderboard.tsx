@@ -25,6 +25,9 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
       className: '6A',
       classNo: '01',
       total_score: 5500,
+      xp: 5500,
+      level: 8,
+      streak: 5,
       inventory: [],
       setupComplete: true,
       lastMissionUpdate: '',
@@ -42,6 +45,9 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
       className: '6A',
       classNo: '02',
       total_score: 4800,
+      xp: 4800,
+      level: 7,
+      streak: 3,
       inventory: [],
       setupComplete: true,
       lastMissionUpdate: '',
@@ -59,6 +65,9 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
       className: 'GUEST',
       classNo: '00',
       total_score: 1000,
+      xp: 1000,
+      level: 4,
+      streak: 2,
       inventory: [],
       setupComplete: true,
       lastMissionUpdate: '',
@@ -169,6 +178,9 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
                   <div className="flex items-center gap-2">
                     <span className={cn("font-bold text-sm", isMe ? "text-indigo-900" : "text-slate-800")}>
                       {user.englishName}
+                    </span>
+                    <span className="text-[10px] font-black text-white bg-indigo-600 px-1.5 rounded leading-none py-0.5">
+                      LV.{user.level || 1}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
