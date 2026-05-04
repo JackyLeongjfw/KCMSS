@@ -19,7 +19,6 @@ interface QuizGameProps {
 }
 
 export default function QuizGame({ profile, theme, mode, onFinish }: QuizGameProps) {
-  if (!profile) return null;
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -33,6 +32,25 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
   const { updateMissionProgress } = useMissions(profile);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  if (!profile) return null;
+
+  const stopTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const startTimer = () => {
+    stopTimer();
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleAnswer(''); // Timeout
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   useEffect(() => {
     const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
@@ -51,23 +69,6 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     }
     return () => stopTimer();
   }, [currentIndex, questions]);
-
-  const startTimer = () => {
-    stopTimer();
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          handleAnswer(''); // Timeout
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const stopTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
 
   const handleAnswer = async (answer: string) => {
     if (answered) return;

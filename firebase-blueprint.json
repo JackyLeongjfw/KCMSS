@@ -2,80 +2,67 @@
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "Student profile data including progress and inventory",
+      "description": "Stores user progress, levels, and customization preferences.",
       "type": "object",
       "properties": {
         "englishName": { "type": "string" },
         "className": { "type": "string" },
-        "classNo": { "type": "string" },
-        "total_score": { "type": "integer" },
-        "best_sort_key": { "type": "integer" },
-        "best_display": { "type": "string" },
-        "best_stars": { "type": "integer" },
         "avatar": { "type": "string" },
-        "inventory": { "type": "array", "items": { "type": "string" } },
-        "activeBadge": { "type": "string" },
-        "setupComplete": { "type": "boolean" },
-        "email": { "type": "string" },
-        "themeProgress": { "type": "object" }
-      },
-      "required": ["englishName", "className", "classNo", "total_score"]
-    },
-    "VocabularyCard": {
-      "title": "Personal Vocabulary Card",
-      "description": "User saved vocabulary from AI or other sources",
-      "type": "object",
-      "properties": {
-        "word": { "type": "string" },
-        "meaning": { "type": "string" },
-        "partOfSpeech": { "type": "string" },
-        "sentence": { "type": "string" },
         "theme": { "type": "string" },
-        "section": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "EssayAnalysis": {
-      "title": "Essay Analysis",
-      "description": "Stored AI analysis of student essays",
-      "type": "object",
-      "properties": {
-        "studentId": { "type": "string" },
-        "content": { "type": "string" },
-        "translation": { "type": "string" },
-        "vocabularySuggestion": { "type": "array", "items": { "type": "object" } },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+        "setupComplete": { "type": "boolean" },
+        "xp": { "type": "number" },
+        "level": { "type": "number" },
+        "total_score": { "type": "number" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["englishName", "setupComplete"]
     },
     "BattleRoom": {
-      "title": "Battle Room",
-      "description": "Live 1v1 vocabulary duel",
+      "title": "Battle Arena Room",
+      "description": "Manages a live vocab duel between two players or a player and a bot.",
       "type": "object",
       "properties": {
         "status": { "type": "string", "enum": ["waiting", "starting", "active", "finished"] },
-        "players": { "type": "array" },
-        "questions": { "type": "array" },
+        "playerUids": { "type": "array", "items": { "type": "string" } },
+        "players": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uid": { "type": "string" },
+              "name": { "type": "string" },
+              "score": { "type": "number" },
+              "progress": { "type": "number" },
+              "ready": { "type": "boolean" },
+              "finished": { "type": "boolean" }
+            }
+          }
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "word": { "type": "string" },
+              "meaning": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
         "winnerId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["status", "playerUids", "players", "questions", "createdAt"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
+    "users/{userId}": {
       "schema": "User",
-      "description": "Individual student profiles"
+      "description": "Individual user profiles accessible by the owner and readable for leaderboards."
     },
-    "/users/{userId}/vocabulary/{vocabId}": {
-      "schema": "VocabularyCard",
-      "description": "Personal word bank"
-    },
-    "/essays/{essayId}": {
-      "schema": "EssayAnalysis",
-      "description": "History of essay analyses"
-    },
-    "/battle_rooms/{roomId}": {
+    "battle_rooms/{roomId}": {
       "schema": "BattleRoom",
-      "description": "Live multiplayer rooms"
+      "description": "Rooms for vocabulary battles."
     }
   }
 }

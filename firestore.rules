@@ -6,49 +6,76 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // 3. Primitive Definitions
+    // --- Helpers ---
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-
-    // 2. Validation Blueprints
-    function isValidUser(data) {
-      return (!data.keys().hasAll(['englishName']) || (data.englishName is string && data.englishName.size() <= 100))
-        && (!data.keys().hasAll(['className']) || (data.className is string && data.className.size() <= 20))
-        && (!data.keys().hasAll(['classNo']) || (data.classNo is string && data.classNo.size() <= 10))
-        && (!data.keys().hasAll(['total_score']) || (data.total_score is number))
-        && (!data.keys().hasAll(['setupComplete']) || (data.setupComplete is bool));
+    
+    // Admin check - include the user who set it up
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email == 'a223402770@gmail.com' && request.auth.token.email_verified == true
+      ); 
     }
 
-    // --- Collections ---
+    // --- User Validation ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['englishName', 'setupComplete'])
+        && data.englishName is string && data.englishName.size() <= 100
+        && data.setupComplete is bool
+        && (data.get('xp', 0) is number)
+        && (data.get('level', 1) is number)
+        && (data.get('total_score', 0) is number);
+    }
 
-    // Users Collection
     match /users/{userId} {
-      // Allow individual profile reads (get and list) for any signed in user
-      allow read: if isSignedIn();
+      allow get: if true; // Public stats for leaderboards
+      allow list: if true; 
       
       allow create: if isOwner(userId) && isValidUser(incoming());
       
-      allow update: if isOwner(userId) && isValidUser(incoming());
-
-      // Subcollections
-      match /{allSubcollections=**} {
-        allow read, write: if isOwner(userId);
-      }
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
+        // Allow updates to profile fields
+        incoming().diff(existing()).affectedKeys().hasAny(['englishName', 'className', 'avatar', 'theme', 'xp', 'level', 'total_score', 'lastLogin', 'setupComplete'])
+        // Ensure non-admins can't escalate privileges (if we had roles)
+      );
     }
 
-    // Battle Rooms Collection
+    // --- Battle Room Validation ---
+    function isValidRoom(data) {
+      return data.keys().hasAll(['status', 'playerUids', 'players', 'questions', 'createdAt'])
+        && data.status in ['waiting', 'starting', 'active', 'finished']
+        && data.playerUids is list && data.playerUids.size() <= 2
+        && data.players is list && data.players.size() <= 2
+        && data.questions is list && data.questions.size() == 10
+        && data.createdAt is string; // Should be Server Timestamp but current code uses ISO string
+    }
+
+    function isPlayerInRoom(roomData) {
+      return isSignedIn() && (request.auth.uid in roomData.playerUids);
+    }
+
     match /battle_rooms/{roomId} {
-      // Allow any user to see rooms they are part of or waiting rooms
-      allow read: if true;
+      allow read: if true; // Publicly observable for joining
       
-      // Allow anyone to create a room (to support guest play)
-      allow create: if true;
+      allow create: if isSignedIn() && isValidRoom(incoming()) && incoming().playerUids.size() == 1;
       
-      // Allow updating a room if the user is one of the players
-      allow update: if true;
+      allow update: if (
+        // Case 1: Joining a room
+        (existing().status == 'waiting' && existing().playerUids.size() < 2 && incoming().playerUids.size() == 2) ||
+        // Case 2: Player updating their progress or the room state
+        (isPlayerInRoom(existing()) && (
+          // Action: Mark as ready
+          (incoming().diff(existing()).affectedKeys().hasOnly(['players', 'status'])) ||
+          // Action: Answer question
+          (incoming().diff(existing()).affectedKeys().hasOnly(['players', 'status', 'winnerId']))
+        )) ||
+        isAdmin()
+      ) && isValidRoom(incoming());
+      
+      allow delete: if isAdmin();
     }
   }
 }

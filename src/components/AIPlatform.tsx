@@ -25,7 +25,6 @@ interface AIPlatformProps {
 }
 
 export default function AIPlatform({ profile }: AIPlatformProps) {
-  if (!profile) return null;
   const [essay, setEssay] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<{
@@ -43,7 +42,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
   const { updateMissionProgress } = useMissions(profile);
 
   useEffect(() => {
-    if (profile.id === 'guest_user') return;
+    if (!profile || profile.id === 'guest_user') return;
 
     const q = query(
       collection(db, 'users', profile.id, 'analyses'),
@@ -55,7 +54,9 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
       console.error("AI History snapshot error:", error);
     });
     return () => unsubscribe();
-  }, [profile.id]);
+  }, [profile?.id]);
+
+  if (!profile) return null;
 
   const handleTestPronunciation = async (text: string) => {
     const score = await testPronunciation(text);

@@ -357,7 +357,6 @@ export default function BattleArena({ profile }: BattleArenaProps) {
     setSearching(false);
     setRewardDistributed(false);
     setQuestionIndex(0);
-    setBotAnsweredForIndex(-1);
     setTimeLeft(10);
     setSelectedOption(null);
   };
