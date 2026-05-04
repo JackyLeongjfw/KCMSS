@@ -39,29 +39,36 @@ export default function BattleArena({ profile }: BattleArenaProps) {
 
   // Distribution of rewards when room finishes
   useEffect(() => {
-      if (room?.id && room?.status === 'finished' && room.winnerId && !rewardDistributed) {
-      setRewardDistributed(true);
-      const isWinner = room.winnerId === profile.id;
-      const isTie = room.winnerId === 'TIE';
-      
-      const xpReward = isWinner ? 100 : (isTie ? 50 : -50);
-      const ptsReward = isWinner ? 200 : (isTie ? 100 : -100);
+    if (room?.id && room?.status === 'finished' && room.winnerId && !rewardDistributed) {
+      const runReward = async () => {
+        setRewardDistributed(true);
+        const isWinner = room.winnerId === profile.id;
+        const isTie = room.winnerId === 'TIE';
+        
+        const xpReward = isWinner ? 100 : (isTie ? 50 : -50);
+        const ptsReward = isWinner ? 200 : (isTie ? 100 : -100);
 
-      const userRef = doc(db, 'users', profile.id);
-      const newXP = Math.max(0, (profile.xp || 0) + xpReward);
-      const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
+        const userRef = doc(db, 'users', profile.id);
+        const newXP = Math.max(0, (profile.xp || 0) + xpReward);
+        const newLevel = Math.floor(Math.sqrt(newXP / 100)) + 1;
 
-      if (isWinner) toast.success("Glorious Victory! +100 XP / +200 PTS", { duration: 5000 });
-      else if (isTie) toast("A respectful Tie. +50 XP / +100 PTS", { duration: 5000 });
-      else toast.error("Defeat. -50 XP / -100 PTS", { duration: 5000 });
+        if (isWinner) toast.success("Glorious Victory! +100 XP / +200 PTS", { duration: 5000 });
+        else if (isTie) toast("A respectful Tie. +50 XP / +100 PTS", { duration: 5000 });
+        else toast.error("Defeat. -50 XP / -100 PTS", { duration: 5000 });
 
-      updateDoc(userRef, {
-        xp: newXP,
-        level: newLevel,
-        total_score: increment(ptsReward)
-      }).catch(e => console.error("Profile reward error:", e));
+        try {
+          await updateDoc(userRef, {
+            xp: newXP,
+            level: newLevel,
+            total_score: increment(ptsReward)
+          });
+        } catch (e) {
+          console.error("Profile reward error:", e);
+        }
+      };
+      runReward();
     }
-  }, [room?.status, room?.winnerId, profile.id, profile.xp, rewardDistributed]);
+  }, [room?.status, room?.winnerId, profile.id, profile.xp, rewardDistributed, profile]);
 
   // Bot Logic Effect
   const [botIndex, setBotIndex] = useState(0);

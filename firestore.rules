@@ -32,15 +32,30 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if true; // Public stats for leaderboards
-      allow list: if true; 
+      allow list: if isSignedIn(); // Allow lists for everyone signed in if needed, or refine to current user
       
       allow create: if isOwner(userId) && isValidUser(incoming());
       
-      allow update: if (isOwner(userId) || isAdmin()) && isValidUser(incoming()) && (
-        // Allow updates to profile fields
-        incoming().diff(existing()).affectedKeys().hasAny(['englishName', 'className', 'avatar', 'theme', 'xp', 'level', 'total_score', 'lastLogin', 'setupComplete'])
-        // Ensure non-admins can't escalate privileges (if we had roles)
+      allow update: if (isOwner(userId) || isAdmin()) && (
+        // Validation for the resulting document
+        isValidUser(incoming()) && 
+        // Only allow changes to these specific fields
+        incoming().diff(existing()).affectedKeys().hasAny([
+          'englishName', 'className', 'avatar', 'theme', 'xp', 'level', 'total_score', 
+          'lastLogin', 'setupComplete', 'missions', 'lastMissionUpdate', 'lastActive', 'streak'
+        ])
       );
+
+      match /analyses/{analysisId} {
+        allow read, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      match /vocabulary/{vocabId} {
+        allow read, list: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
     }
 
     // --- Battle Room Validation ---

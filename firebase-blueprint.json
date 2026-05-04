@@ -60,6 +60,33 @@
       "schema": "User",
       "description": "Individual user profiles accessible by the owner and readable for leaderboards."
     },
+    "users/{userId}/analyses/{analysisId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "essay": { "type": "string" },
+          "sentencePairs": { "type": "array" },
+          "suggestions": { "type": "array" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Historical AI essay analyses."
+    },
+    "users/{userId}/vocabulary/{vocabId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "word": { "type": "string" },
+          "meaning": { "type": "string" },
+          "partOfSpeech": { "type": "string" },
+          "sentence": { "type": "string" },
+          "theme": { "type": "string" },
+          "section": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "User's personalized word bank."
+    },
     "battle_rooms/{roomId}": {
       "schema": "BattleRoom",
       "description": "Rooms for vocabulary battles."

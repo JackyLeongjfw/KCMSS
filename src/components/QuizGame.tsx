@@ -33,15 +33,26 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   const { updateMissionProgress } = useMissions(profile);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  if (!profile) return null;
-
   const stopTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
+  const startTimer = () => {
+    stopTimer();
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleAnswer(''); // Timeout
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleFinish = async () => {
     if (!profile) return;
-    const scorePercent = Math.round((correctCount / questions.length) * 100);
+    const scorePercent = Math.round((correctCount / (questions.length || 1)) * 100);
     const passed = scorePercent >= 80;
 
     try {
@@ -122,23 +133,11 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     }, 2000);
   };
 
-  const startTimer = () => {
-    stopTimer();
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          handleAnswer(''); // Timeout
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   useEffect(() => {
+    if (!profile) return;
     const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
     setQuestions(generateQuiz(themePool, mode));
-  }, [theme, mode]);
+  }, [theme, mode, profile]);
 
   useEffect(() => {
     if (questions.length > 0 && !answered) {
@@ -151,9 +150,9 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
       }
     }
     return () => stopTimer();
-  }, [currentIndex, questions]);
+  }, [currentIndex, questions, answered, mode]);
 
-  if (questions.length === 0) return null;
+  if (!profile || questions.length === 0) return null;
 
   const currentQ = questions[currentIndex];
   const isCorrect = userAnswer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();

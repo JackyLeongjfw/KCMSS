@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, signIn } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { UserProfile } from './types';
 import Dashboard from './components/Dashboard';
 import AIPlatform from './components/AIPlatform';
@@ -32,12 +32,12 @@ export default function App() {
 
 
   useEffect(() => {
-    const handleTabChange = (e: any) => {
+    const handleTabChange = (e: CustomEvent<string>) => {
       setActiveTab(e.detail);
       setQuizConfig(null);
     };
-    window.addEventListener('changeTab', handleTabChange);
-    return () => window.removeEventListener('changeTab', handleTabChange);
+    window.addEventListener('changeTab', handleTabChange as EventListener);
+    return () => window.removeEventListener('changeTab', handleTabChange as EventListener);
   }, []);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function App() {
       displayName: 'Guest Student',
       email: 'guest@example.com',
       photoURL: null,
-    } as any;
+    } as unknown as User;
     
     const guestProfile: UserProfile = {
       id: 'guest_user',

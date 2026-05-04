@@ -16,7 +16,7 @@ interface SavedAnalysis {
   essay: string;
   sentencePairs: { original: string; translation: string }[];
   suggestions: EssaySuggestion[];
-  createdAt: any;
+  createdAt: { toDate: () => Date } | any;
 }
 
 interface AIPlatformProps {
@@ -37,21 +37,35 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
   const [selectedTheme, setSelectedTheme] = useState('');
   const [activeTab, setActiveTab] = useState<'reading' | 'vocabulary'>('reading');
   
-  const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
+  const { speak, testPronunciation } = usePronunciation();
   const { updateMissionProgress } = useMissions(profile);
 
   useEffect(() => {
-    if (!profile || profile.id === 'guest_user') return;
+    if (!profile || profile.id === 'guest_user') {
+      if (history.length > 0) setHistory([]);
+      return;
+    }
 
+    const analysesRef = collection(db, 'users', profile.id, 'analyses');
     const q = query(
-      collection(db, 'users', profile.id, 'analyses'),
+      analysesRef,
       orderBy('createdAt', 'desc')
     );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setHistory(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavedAnalysis)));
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavedAnalysis));
+      setHistory(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+        return data;
+      });
     }, (error) => {
-      console.error("AI History snapshot error:", error);
+      if (error.code === 'permission-denied') {
+        console.warn("AI History permission denied - this is expected if rules are still deploying");
+      } else {
+        console.error("AI History snapshot error:", error);
+      }
     });
+
     return () => unsubscribe();
   }, [profile?.id]);
 
@@ -90,8 +104,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
       // Mission Progress: Analysis
       updateMissionProgress('analysis', 1);
       
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Failed to analyze essay. Please try again.");
     } finally {
       setAnalyzing(false);
@@ -113,7 +126,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
         createdAt: serverTimestamp()
       });
       toast.success("Analysis saved to your history!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save analysis");
     }
   };
