@@ -39,6 +39,47 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
+  const handleAnswer = async (answer: string) => {
+    if (answered) return;
+    stopTimer();
+    setAnswered(true);
+    setUserAnswer(answer);
+
+    const q = questions[currentIndex];
+    const isCorrect = answer.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
+
+    let points = 0;
+    if (isCorrect) {
+      const base = mode < 2 ? 5 : mode < 4 ? 10 : 20;
+      const comboBonus = Math.min(streak * (mode < 2 ? 2 : mode < 4 ? 5 : 10), 100);
+      
+      // Daily Streak Multiplier: +5% per streak day (up to +50%)
+      const streakMult = 1 + (Math.min(profile.streak || 0, 10) * 0.05);
+      points = Math.round((base + comboBonus) * streakMult);
+      
+      setScore(s => s + points);
+      setCorrectCount(c => c + 1);
+      setStreak(s => s + 1);
+      setLastPoints(points);
+      updateMissionProgress('quiz_correct', 1);
+    } else {
+      setStreak(0);
+      setLastPoints(0);
+    }
+
+    // Auto next after delay
+    setTimeout(() => {
+      if (currentIndex < questions.length - 1) {
+        setCurrentIndex(c => c + 1);
+        setAnswered(false);
+        setUserAnswer('');
+        setTimeLeft(mode < 2 ? 10 : 15);
+      } else {
+        handleFinish();
+      }
+    }, 2000);
+  };
+
   const startTimer = () => {
     stopTimer();
     timerRef.current = setInterval(() => {
@@ -69,45 +110,6 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     }
     return () => stopTimer();
   }, [currentIndex, questions]);
-
-  const handleAnswer = async (answer: string) => {
-    if (answered) return;
-    stopTimer();
-    setAnswered(true);
-    setUserAnswer(answer);
-
-    const q = questions[currentIndex];
-    const isCorrect = answer.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
-
-    let points = 0;
-    if (isCorrect) {
-      const base = mode < 2 ? 5 : mode < 4 ? 10 : 20;
-      const comboBonus = Math.min(streak * (mode < 2 ? 2 : mode < 4 ? 5 : 10), 100);
-      
-      // Daily Streak Multiplier: +5% per streak day (up to +50%)
-      const streakMult = 1 + (Math.min(profile.streak || 0, 10) * 0.05);
-      points = Math.round((base + comboBonus) * streakMult);
-      
-      setScore(s => s + points);
-      setCorrectCount(c => c + 1);
-      setStreak(s => s + 1);
-      setLastPoints(points);
-    } else {
-      setStreak(0);
-      setLastPoints(0);
-    }
-
-    // Auto next after delay
-    setTimeout(() => {
-      if (currentIndex < questions.length - 1) {
-        setCurrentIndex(c => c + 1);
-        setAnswered(false);
-        setUserAnswer('');
-      } else {
-        handleFinish();
-      }
-    }, 2000);
-  };
 
   const handleFinish = async () => {
     const scorePercent = Math.round((correctCount / questions.length) * 100);
