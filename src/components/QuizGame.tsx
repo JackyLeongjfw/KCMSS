@@ -130,20 +130,27 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     if (!profile) return [];
     const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
     return generateQuiz(themePool, mode);
-  }, [theme, mode, profile?.id]);
+  }, [theme, mode, profile]);
 
   useEffect(() => {
     if (questions.length > 0 && !answered) {
-      setTimeLeft(mode < 2 ? 10 : 15);
+      setTimeLeft(prev => {
+        const nextTime = mode < 2 ? 10 : 15;
+        return prev === nextTime ? prev : nextTime;
+      });
       startTimer();
       
       // Auto-play audio for dictation mode only
       if (mode === 2) {
-        setTimeout(() => speak(questions[currentIndex].correctAnswer), 500);
+        const timer = setTimeout(() => speak(questions[currentIndex].correctAnswer), 500);
+        return () => {
+          stopTimer();
+          clearTimeout(timer);
+        };
       }
     }
     return () => stopTimer();
-  }, [currentIndex, questions, answered, mode, speak]);
+  }, [currentIndex, questions, answered, mode, speak, startTimer]);
 
   if (!profile || questions.length === 0) return null;
 

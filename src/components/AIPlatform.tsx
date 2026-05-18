@@ -18,7 +18,7 @@ interface SavedAnalysis {
   essay: string;
   sentencePairs: { original: string; translation: string }[];
   suggestions: EssaySuggestion[];
-  createdAt: { toDate: () => Date } | any;
+  createdAt: { toDate: () => Date };
 }
 
 interface AIPlatformProps {
@@ -46,7 +46,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
 
   useEffect(() => {
     if (!profile || profile.id === 'guest_user') {
-      if (history.length > 0) setHistory([]);
+      setHistory(prev => prev.length > 0 ? [] : prev);
       return;
     }
 
@@ -208,7 +208,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
     try {
       await deleteDoc(doc(db, 'users', profile.id, 'analyses', id));
       toast.success("Analysis deleted");
-    } catch (error) {
+    } catch {
       toast.error("Delete failed");
     }
   };

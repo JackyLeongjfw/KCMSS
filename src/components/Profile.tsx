@@ -70,13 +70,13 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (profile) {
-      // Only set if actually different to avoid cascading renders
       setForm(prev => {
-        if (prev.englishName === profile.englishName && 
-            prev.className === profile.className && 
-            prev.classNo === profile.classNo) return prev;
+        if (prev.englishName === (profile.englishName || user.displayName || '') && 
+            prev.className === (profile.className || '') && 
+            prev.classNo === (profile.classNo || '')) return prev;
+        
         return {
           englishName: profile.englishName || user.displayName || '',
           className: profile.className || '',
@@ -84,9 +84,9 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
         };
       });
     } else if (user.displayName && !form.englishName) {
-      setForm(prev => ({ ...prev, englishName: user.displayName || '' }));
+      setForm(prev => prev.englishName ? prev : ({ ...prev, englishName: user.displayName || '' }));
     }
-  }, [profile, user.displayName, user.uid]); // Added user.uid for stability
+  }, [profile, user.displayName, user.uid, form.englishName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -60,7 +60,7 @@ export default function Shop({ profile }: ShopProps) {
         }
       } catch (error) {
         console.error("Equipment update error:", error);
-        toast.error("Failed to update equipment: " + (error as any).message);
+        toast.error("Failed to update equipment: " + (error instanceof Error ? error.message : String(error)));
       } finally {
         setBuying(null);
       }
@@ -82,8 +82,11 @@ export default function Shop({ profile }: ShopProps) {
       };
 
       if (item.category === 'token') {
-        // Move ID generation here to avoid render-time impurity linter warnings if captured
-        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const randomStr = Array.from(crypto.getRandomValues(new Uint8Array(4)))
+          .map(b => b.toString(36))
+          .join('')
+          .substring(0, 6)
+          .toUpperCase();
         updates.aiVouchers = arrayUnion(randomStr);
         await updateDoc(userRef, updates);
         toast.success(`Purchased! Your one-time AI Code is: ${randomStr}`, { duration: 10000 });
@@ -102,7 +105,7 @@ export default function Shop({ profile }: ShopProps) {
       }
     } catch (error) {
       console.error("Purchase error:", error);
-      toast.error("Purchase failed: " + (error as any).message);
+      toast.error("Purchase failed: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setBuying(null);
     }
