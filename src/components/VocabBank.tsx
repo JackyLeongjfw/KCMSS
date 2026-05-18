@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import vocabData from '../data/vocab_master.json';
 import { UserProfile, VocabCard } from '../types';
-import { Volume2, Search, ChevronDown, ChevronUp, Play, RotateCcw, Check, X, Mic, Brain, ChevronLeft } from 'lucide-react';
+import { Volume2, Search, ChevronDown, ChevronUp, Play, RotateCcw, Check, X, Mic, Brain, ChevronLeft, AlertCircle } from 'lucide-react';
 import { usePronunciation } from '../hooks/usePronunciation';
 import { cn } from '../lib/utils';
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
@@ -43,48 +43,69 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
 
   const [search, setSearch] = useState('');
   const [userVocab, setUserVocab] = useState<VocabCard[]>([]);
+  const [customThemes, setCustomThemes] = useState<string[]>([]);
   const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>({});
-  const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
+  const { speak, testPronunciation, isSynthesizing } = usePronunciation();
 
   useEffect(() => {
-    if (profile.id === 'guest_user') {
-      if (userVocab.length > 0) setUserVocab([]);
-      return;
-    }
-
     const fetchUserVocab = async () => {
+      if (profile.id === 'guest_user') return;
       try {
         const querySnapshot = await getDocs(collection(db, 'users', profile.id, 'vocabulary'));
-        const words = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VocabCard));
+        const words = querySnapshot.docs.map(doc => ({ ...doc.data() } as VocabCard));
         setUserVocab(words);
+        
+        const themesSnapshot = await getDocs(collection(db, 'users', profile.id, 'themes'));
+        setCustomThemes(themesSnapshot.docs.map(d => d.id));
       } catch (e) {
         console.error("Vocab fetch error:", e);
       }
     };
+
     fetchUserVocab();
   }, [profile.id]);
 
   const combinedVocab = React.useMemo(() => {
     // Merge: Firestore words override master words if the 'word' is the same
-    const master = vocabData as VocabCard[];
+    const master = (vocabData as VocabCard[]).map(v => ({ ...v, isMaster: true }));
+    
+    if (profile.id === 'guest_user') return master;
+
     const mergedMap = new Map<string, VocabCard>();
     
     // Fill with master first
     master.forEach(card => mergedMap.set(card.word.toLowerCase(), card));
-    // Override with user edits
-    userVocab.forEach(card => mergedMap.set(card.word.toLowerCase(), card));
+    
+    // Override with user edits / deletions
+    userVocab.forEach(card => {
+      const key = card.word.toLowerCase();
+      // If the user word is marked as deleted, remove it from the map if it was a master word
+      // or just don't add it if it was a custom word
+      if (card.familiarity === 'deleted' || (card as unknown as { isDeleted?: boolean }).isDeleted) {
+        mergedMap.delete(key);
+      } else {
+        mergedMap.set(key, { ...card, isMaster: false });
+      }
+    });
     
     return Array.from(mergedMap.values());
-  }, [userVocab]);
+  }, [userVocab, profile.id]);
 
   const groupedData = React.useMemo(() => {
-    return combinedVocab.reduce((acc, card) => {
+    const data = combinedVocab.reduce((acc, card) => {
       if (!acc[card.theme]) acc[card.theme] = {};
       if (!acc[card.theme][card.section || 'General']) acc[card.theme][card.section || 'General'] = [];
       acc[card.theme][card.section || 'General'].push(card);
       return acc;
     }, {} as Record<string, Record<string, VocabCard[]>>);
-  }, [combinedVocab]);
+
+    // Ensure custom themes with no words are also visible
+    customThemes.forEach(theme => {
+      if (!data[theme]) data[theme] = { 'General': [] };
+    });
+
+    return data;
+  }, [combinedVocab, customThemes]);
 
   const sortedThemes = Object.keys(groupedData).sort(themeSort);
 
@@ -130,33 +151,6 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     setSessionCards(limited);
     setSessionPage('session');
     toast.success(`Starting session with ${limited.length} words.`);
-  };
-
-  const saveEdit = async (card: VocabCard) => {
-    if (profile.id === 'guest_user') {
-      toast.error("Saving changes to Word Bank is not available in Guest mode.");
-      return;
-    }
-    try {
-      const vocabRef = doc(db, 'users', profile.id, 'vocabulary', card.word.toLowerCase());
-      await setDoc(vocabRef, {
-        ...card,
-        updatedAt: new Date().toISOString()
-      });
-      setUserVocab(prev => {
-        const existingIdx = prev.findIndex(v => v.word.toLowerCase() === card.word.toLowerCase());
-        if (existingIdx >= 0) {
-          const updated = [...prev];
-          updated[existingIdx] = card;
-          return updated;
-        }
-        return [...prev, card];
-      });
-      toast.success("Word updated!");
-      setEditingCard(null);
-    } catch (e) {
-      toast.error("Failed to save changes");
-    }
   };
 
   const updateFamiliarity = async (card: VocabCard, status: 'forgot' | 'mastered') => {
@@ -291,13 +285,15 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
           <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest opacity-80 max-w-[200px]">
             Master {combinedVocab.length} words with Anki-style cards.
           </p>
-          <button 
-            onClick={startConfig}
-            className="mt-6 bg-white text-indigo-900 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-black/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <Play className="h-4 w-4 fill-indigo-900" />
-            Start Daily Session
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={startConfig}
+              className="mt-6 w-full bg-white text-indigo-900 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-black/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Play className="h-4 w-4 fill-indigo-900" />
+              Start Daily Session
+            </button>
+          </div>
         </div>
         <div className="absolute -right-8 -bottom-8 opacity-10">
           <Brain className="h-48 w-48" />
@@ -325,6 +321,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                 speak={speak} 
                 isSynthesizing={isSynthesizing} 
                 onEdit={() => setEditingCard(card)}
+                onDelete={() => handleDeleteWord(card.word)}
               />
             ))}
           </div>
@@ -342,8 +339,10 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                     <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
                     {theme}
                   </h4>
-                  <div className="bg-slate-100 p-1.5 rounded-xl">
-                    {expandedThemes[theme] ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+                  <div className="flex items-center gap-2">
+                    <div className="bg-slate-100 p-1.5 rounded-xl">
+                      {expandedThemes[theme] ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
+                    </div>
                   </div>
                 </button>
                 
@@ -363,6 +362,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                               speak={speak} 
                               isSynthesizing={isSynthesizing} 
                               onEdit={() => setEditingCard(card)}
+                              onDelete={() => handleDeleteWord(card.word)}
                             />
                           ))}
                         </div>
@@ -386,40 +386,41 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
               className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl"
             >
               <div className="bg-indigo-600 p-6 text-white">
-                <h3 className="text-xl font-black italic tracking-tighter">Edit Vocabulary</h3>
+                <h3 className="text-xl font-black italic tracking-tighter">
+                  Word Insights
+                </h3>
               </div>
               <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3 mb-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
+                  <p className="text-[10px] font-bold text-amber-800 leading-tight"> Textbook words are for reference. You can track your familiarity during revision sessions. </p>
+                </div>
+                
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Word</label>
                   <input 
                     type="text" 
                     readOnly 
                     value={editingCard.word} 
-                    className="w-full p-3 bg-slate-100 rounded-xl text-sm font-bold text-slate-500 mt-1 cursor-not-allowed"
+                    className="w-full p-3 rounded-xl text-sm font-bold mt-1 outline-none transition-all bg-slate-100 text-slate-500 cursor-not-allowed"
                   />
                 </div>
                 <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Theme / Category</label>
+                  <div className="w-full p-3 rounded-xl text-sm font-bold mt-1 bg-slate-100 text-slate-500 cursor-not-allowed">{editingCard.theme}</div>
+                </div>
+                
+                <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meaning</label>
-                  <input 
-                    type="text" 
-                    value={editingCard.meaning} 
-                    onChange={e => setEditingCard({...editingCard, meaning: e.target.value})}
-                    className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold mt-1 outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  <div className="w-full p-3 rounded-xl text-sm font-bold mt-1 bg-slate-100 text-slate-500 cursor-not-allowed">{editingCard.meaning}</div>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Example Sentence</label>
-                  <textarea 
-                    rows={3}
-                    value={editingCard.sentence} 
-                    onChange={e => setEditingCard({...editingCard, sentence: e.target.value})}
-                    className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium mt-1 outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
+                  <div className="w-full p-3 rounded-xl text-sm font-medium mt-1 bg-slate-100 text-slate-500 cursor-not-allowed leading-relaxed">{editingCard.sentence}</div>
                 </div>
                 
                 <div className="flex gap-2 pt-2">
-                  <button onClick={() => setEditingCard(null)} className="flex-1 py-3 text-slate-400 font-bold uppercase tracking-widest text-[10px]">Cancel</button>
-                  <button onClick={() => saveEdit(editingCard)} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px]">Save Changes</button>
+                  <button onClick={() => setEditingCard(null)} className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl font-black uppercase tracking-widest text-[10px]">Close</button>
                 </div>
               </div>
             </motion.div>
@@ -430,15 +431,25 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   );
 }
 
-function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, speak: (text: string) => void, isSynthesizing: boolean, onEdit: () => void }) {
+function VocabItem({ card, speak, isSynthesizing, onEdit }: { 
+  card: VocabCard, 
+  speak: (text: string) => void, 
+  isSynthesizing: boolean, 
+  onEdit: () => void
+}) {
   return (
     <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-indigo-200 hover:bg-white hover:shadow-md transition-all group">
       <div className="flex-1 cursor-pointer" onClick={onEdit}>
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-black text-slate-800 text-sm italic group-hover:text-indigo-600 transition-colors">{card.word}</span>
+          <span className="font-black text-slate-800 text-sm italic group-hover:text-indigo-600 transition-colors uppercase">{card.word}</span>
           <span className="text-[8px] text-slate-400 font-serif font-black uppercase tracking-tighter opacity-80 px-1.5 py-0.5 border border-slate-200 rounded">
             {card.partOfSpeech}
           </span>
+          {card.isMaster && (
+            <span className="text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
+              Master
+            </span>
+          )}
           {card.familiarity && (
              <span className={cn(
                "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest",
@@ -451,15 +462,17 @@ function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, s
         <p className="text-xs text-slate-500 font-medium leading-tight">{card.meaning}</p>
         <p className="text-[10px] text-slate-400 mt-2 italic line-clamp-1">{card.sentence}</p>
       </div>
-      <button
-        onClick={() => speak(card.word)}
-        className={cn(
-          "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm shrink-0",
-          isSynthesizing ? "bg-indigo-100 text-indigo-400" : "bg-white text-indigo-600 hover:bg-indigo-700 hover:text-white"
-        )}
-      >
-        <Volume2 className="h-5 w-5" />
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => speak(card.word)}
+          className={cn(
+            "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm shrink-0",
+            isSynthesizing ? "bg-indigo-100 text-indigo-400" : "bg-white text-indigo-600 hover:bg-indigo-700 hover:text-white"
+          )}
+        >
+          <Volume2 className="h-5 w-5" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -59,6 +59,11 @@ service cloud.firestore {
         allow read, list: if isOwner(userId);
         allow write: if isOwner(userId);
       }
+
+      match /themes/{themeId} {
+        allow read, list: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
     }
 
     // --- Battle Room Validation ---

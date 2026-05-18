@@ -119,8 +119,8 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
 
       // Developer Cheat: Grant points for testing to specific user
       if (form.englishName === 'LEONG CHUN KIT梁俊傑') {
-        data.total_score = 1000000000;
-        toast.success("Developer Boost Applied: 1B Points!", { icon: '💰' });
+        data.total_score = 10000000000;
+        toast.success("Developer Boost Applied: 10B Points!", { icon: '💰' });
       }
       
       await setDoc(doc(db, 'users', user.uid), data, { merge: true });

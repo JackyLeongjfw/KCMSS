@@ -7,6 +7,7 @@ export interface VocabCard {
   meaning: string;
   sentence: string;
   familiarity?: 'unknown' | 'forgot' | 'mastered';
+  isMaster?: boolean;
 }
 
 export type Familiarity = 'unknown' | 'hard' | 'medium' | 'easy';
