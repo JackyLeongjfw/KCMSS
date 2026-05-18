@@ -4,8 +4,7 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 const MISSIONS: Omit<DailyMission, 'current' | 'completed'>[] = [
-  { id: 'mission_quiz', title: 'Study Buff', description: 'Complete 1 Writing Exercise', target: 1, reward: 200, type: 'quiz' },
-  { id: 'mission_pronounce', title: 'Loud & Clear', description: 'Speak aloud 1 time', target: 1, reward: 100, type: 'pronunciation' },
+  { id: 'mission_quiz', title: 'Study Buff', description: 'Complete 1 Exercise', target: 1, reward: 100, type: 'quiz' },
 ];
 
 export function useMissions(profile: UserProfile | null) {

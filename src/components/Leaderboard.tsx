@@ -14,10 +14,11 @@ interface LeaderboardProps {
 }
 
 export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps) {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [dbUsers, setDbUsers] = useState<UserProfile[]>([]);
   const [filter, setFilter] = useState<'global' | 'class'>('global');
 
   const MOCK_LEADERBOARD: UserProfile[] = [
+    // ... same mock data ...
     {
       id: 'mock_1',
       englishName: 'Emma Watson',
@@ -80,11 +81,13 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
     }
   ];
 
+  const users = React.useMemo(() => {
+    const list = isGuest ? MOCK_LEADERBOARD : dbUsers;
+    return [...list].sort((a, b) => (b.xp || 0) - (a.xp || 0));
+  }, [isGuest, dbUsers]);
+
   useEffect(() => {
-    if (isGuest) {
-      setUsers([...MOCK_LEADERBOARD].sort((a, b) => (b.xp || 0) - (a.xp || 0)));
-      return;
-    }
+    if (isGuest) return;
 
     const q = query(
       collection(db, 'users'), 
@@ -96,18 +99,16 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
     const unsubscribe = onSnapshot(q, 
       (snap) => {
         const userData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-        setUsers(userData);
+        setDbUsers(userData);
       },
       (error) => {
-        if (!isGuest) {
-          console.error("Leaderboard snapshot error:", error);
-          toast.error("Failed to load leaderboard");
-        }
+        console.error("Leaderboard snapshot error:", error);
+        toast.error("Failed to load leaderboard");
       }
     );
 
     return () => unsubscribe();
-  }, [filter, isGuest]);
+  }, [isGuest]); // Filter removed as it's not actually used for the query yet
 
   return (
     <div className="space-y-4">

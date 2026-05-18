@@ -55,14 +55,18 @@ export const generateQuiz = (pool: VocabCard[], mode: number) => {
       questionText = `What is the meaning of "${card.word}"?`;
       options = [...distractors.map(d => d.meaning), card.meaning].sort(() => 0.5 - Math.random());
       correctAnswer = card.meaning;
-    } else if (mode === 1 || mode === 2) {
+    } else if (mode === 1) {
       const [blanked, answer] = SmartTextProcessor.processSentence(card.sentence, card.word);
-      questionText = mode === 1 ? blanked : "🔊 Listen and select the missing word";
+      questionText = blanked;
       options = [...distractors.map(d => d.word), answer].sort(() => 0.5 - Math.random());
       correctAnswer = answer;
-    } else if (mode === 3 || mode === 4) {
-      const [blanked, answer] = SmartTextProcessor.processSentence(card.sentence, card.word, mode === 4);
-      questionText = mode === 3 ? "🔊 Listen and type the sentence / word" : blanked;
+    } else if (mode === 2) {
+      const [blanked, answer] = SmartTextProcessor.processSentence(card.sentence, card.word);
+      questionText = `🔊 Dictation: ${blanked}`;
+      correctAnswer = answer;
+    } else if (mode === 3) {
+      const [blanked, answer] = SmartTextProcessor.processSentence(card.sentence, card.word);
+      questionText = blanked;
       correctAnswer = answer;
     }
 

@@ -90,6 +90,21 @@
     "battle_rooms/{roomId}": {
       "schema": "BattleRoom",
       "description": "Rooms for vocabulary battles."
+    },
+    "feedbacks/{feedbackId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "userName": { "type": "string" },
+          "userEmail": { "type": "string" },
+          "message": { "type": "string" },
+          "type": { "type": "string", "enum": ["bug", "feedback", "suggestion"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["userId", "message", "createdAt"]
+      },
+      "description": "User submitted feedback and bug reports."
     }
   }
 }

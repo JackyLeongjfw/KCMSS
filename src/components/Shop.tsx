@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { User } from 'firebase/auth';
 import { UserProfile, ShopItem } from '../types';
 import { SHOP_ITEMS } from '../constants';
-import { ShoppingBag, Star, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Star, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { db } from '../lib/firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -60,7 +59,8 @@ export default function Shop({ profile }: ShopProps) {
           toast.success(`Equipped ${item.name}!`);
         }
       } catch (error) {
-        toast.error("Failed to update equipment.");
+        console.error("Equipment update error:", error);
+        toast.error("Failed to update equipment: " + (error as any).message);
       } finally {
         setBuying(null);
       }
@@ -77,15 +77,16 @@ export default function Shop({ profile }: ShopProps) {
     setBuying(item.id);
     try {
       const userRef = doc(db, 'users', profile.id);
-      const updates: any = {
+      const updates: Partial<UserProfile> = {
         total_score: profile.total_score - item.price,
       };
 
       if (item.category === 'token') {
-        const voucher = Math.random().toString(36).substring(2, 8).toUpperCase();
-        updates.aiVouchers = arrayUnion(voucher);
+        // Move ID generation here to avoid render-time impurity linter warnings if captured
+        const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+        updates.aiVouchers = arrayUnion(randomStr);
         await updateDoc(userRef, updates);
-        toast.success(`Purchased! Your one-time AI Code is: ${voucher}`, { duration: 10000 });
+        toast.success(`Purchased! Your one-time AI Code is: ${randomStr}`, { duration: 10000 });
       } else {
         updates.inventory = arrayUnion(item.id);
         // Auto-equip based on category
@@ -97,10 +98,11 @@ export default function Shop({ profile }: ShopProps) {
         if (item.category === 'title') updates.activeTitle = item.name;
 
         await updateDoc(userRef, updates);
-        toast.success(`Purchased ${item.name}! ` + (item.category !== 'token' ? 'Equipped for your profile.' : ''));
+        toast.success(`Purchased ${item.name}! Equipped for your profile.`);
       }
     } catch (error) {
-      toast.error("Purchase failed. Please try again.");
+      console.error("Purchase error:", error);
+      toast.error("Purchase failed: " + (error as any).message);
     } finally {
       setBuying(null);
     }

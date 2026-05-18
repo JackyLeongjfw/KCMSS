@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import vocabData from '../data/vocab_master.json';
 import { UserProfile, VocabCard } from '../types';
-import { Volume2, Search, ChevronDown, ChevronUp, Play, RotateCcw, Check, X, Mic, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Volume2, Search, ChevronDown, ChevronUp, Play, RotateCcw, Check, X, Mic, Brain, ChevronLeft } from 'lucide-react';
 import { usePronunciation } from '../hooks/usePronunciation';
 import { cn } from '../lib/utils';
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
@@ -43,13 +43,12 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
 
   const [search, setSearch] = useState('');
   const [userVocab, setUserVocab] = useState<VocabCard[]>([]);
-  const [combinedVocab, setCombinedVocab] = useState<VocabCard[]>([]);
   const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>({});
   const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
 
   useEffect(() => {
     if (profile.id === 'guest_user') {
-      setUserVocab([]);
+      if (userVocab.length > 0) setUserVocab([]);
       return;
     }
 
@@ -65,7 +64,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     fetchUserVocab();
   }, [profile.id]);
 
-  useEffect(() => {
+  const combinedVocab = React.useMemo(() => {
     // Merge: Firestore words override master words if the 'word' is the same
     const master = vocabData as VocabCard[];
     const mergedMap = new Map<string, VocabCard>();
@@ -75,15 +74,17 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     // Override with user edits
     userVocab.forEach(card => mergedMap.set(card.word.toLowerCase(), card));
     
-    setCombinedVocab(Array.from(mergedMap.values()));
+    return Array.from(mergedMap.values());
   }, [userVocab]);
 
-  const groupedData = combinedVocab.reduce((acc, card) => {
-    if (!acc[card.theme]) acc[card.theme] = {};
-    if (!acc[card.theme][card.section || 'General']) acc[card.theme][card.section || 'General'] = [];
-    acc[card.theme][card.section || 'General'].push(card);
-    return acc;
-  }, {} as Record<string, Record<string, VocabCard[]>>);
+  const groupedData = React.useMemo(() => {
+    return combinedVocab.reduce((acc, card) => {
+      if (!acc[card.theme]) acc[card.theme] = {};
+      if (!acc[card.theme][card.section || 'General']) acc[card.theme][card.section || 'General'] = [];
+      acc[card.theme][card.section || 'General'].push(card);
+      return acc;
+    }, {} as Record<string, Record<string, VocabCard[]>>);
+  }, [combinedVocab]);
 
   const sortedThemes = Object.keys(groupedData).sort(themeSort);
 
@@ -429,7 +430,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   );
 }
 
-function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, speak: any, isSynthesizing: boolean, onEdit: () => void }) {
+function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, speak: (text: string) => void, isSynthesizing: boolean, onEdit: () => void }) {
   return (
     <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-indigo-200 hover:bg-white hover:shadow-md transition-all group">
       <div className="flex-1 cursor-pointer" onClick={onEdit}>
@@ -466,8 +467,8 @@ function VocabItem({ card, speak, isSynthesizing, onEdit }: { card: VocabCard, s
 function RevisionSession({ cards, onExit, speak, testPronunciation, onAction }: { 
   cards: VocabCard[], 
   onExit: () => void, 
-  speak: any, 
-  testPronunciation: any,
+  speak: (text: string) => void, 
+  testPronunciation: (text: string) => Promise<number>,
   onAction: (card: VocabCard, status: 'forgot' | 'mastered') => Promise<void>
 }) {
   const [sessionCards, setSessionCards] = useState(cards);

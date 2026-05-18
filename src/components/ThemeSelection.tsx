@@ -24,10 +24,9 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
   
   const modes = [
     { name: 'L1: Meaning', diff: 'Easy' },
-    { name: 'L1: Fill Blank', diff: 'Easy' },
-    { name: 'L2: Listening', diff: 'Medium' },
-    { name: 'L2: Dictation', diff: 'Medium' },
-    { name: 'L3: Master', diff: 'Hard' },
+    { name: 'L2: Fill Blank', diff: 'Medium' },
+    { name: 'L3: Dictation', diff: 'Hard' },
+    { name: 'L4: Unseen', diff: 'Extreme' },
   ];
 
   const getThemeProgress = (theme: string) => {
@@ -92,9 +91,10 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
                     "w-12 h-12 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-tighter shadow-sm shrink-0",
                     mode.diff === 'Easy' ? "bg-emerald-50 text-emerald-700 border border-emerald-100" :
                     mode.diff === 'Medium' ? "bg-amber-50 text-amber-700 border border-amber-100" :
+                    mode.diff === 'Hard' ? "bg-orange-50 text-orange-700 border border-orange-100" :
                     "bg-red-50 text-red-700 border border-red-100"
                   )}>
-                    LV {Math.floor(mIdx/2) + 1}
+                    LV {mIdx + 1}
                   </div>
                   <div>
                     <p className="font-bold text-slate-800 text-sm">{mode.name}</p>
@@ -134,7 +134,7 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
           <X className="h-5 w-5" />
         </button>
         <div className="relative z-10">
-          <h3 className="text-xl font-bold mb-1">Writing Exercise</h3>
+          <h3 className="text-xl font-bold mb-1">Exercise</h3>
           <p className="text-indigo-100 text-xs font-medium uppercase tracking-widest opacity-80">Choose a theme to practice</p>
         </div>
         <div className="absolute top-0 right-0 p-4 opacity-10">

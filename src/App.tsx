@@ -9,6 +9,7 @@ import VocabBank from './components/VocabBank';
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Shop from './components/Shop';
+import Support from './components/Support';
 import Navigation from './components/Navigation';
 import QuizGame from './components/QuizGame';
 import ThemeSelection from './components/ThemeSelection';
@@ -81,14 +82,15 @@ export default function App() {
     setSigningIn(true);
     try {
       await signIn();
-    } catch (error: any) {
-      console.error("Sign in full error object:", error);
-      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+    } catch (error: unknown) {
+      const authError = error as { code?: string; message?: string };
+      console.error("Sign in full error object:", authError);
+      if (authError.code === 'auth/cancelled-popup-request' || authError.code === 'auth/popup-closed-by-user') {
         // Normal cancellation, do nothing
-      } else if (error.code === 'auth/unauthorized-domain') {
+      } else if (authError.code === 'auth/unauthorized-domain') {
         toast.error("Domain not authorized! Add 'localhost' to Firebase Console Authorized Domains.");
       } else {
-        toast.error(`Sign in error (${error.code}): ${error.message}`);
+        toast.error(`Sign in error (${authError.code}): ${authError.message}`);
       }
     } finally {
       setSigningIn(false);
@@ -145,14 +147,14 @@ export default function App() {
 
       const userRef = doc(db, 'users', user.uid);
       
-      let newStreak = 1;
+      let newStreak: number;
       if (lastActive === yesterdayStr) {
         newStreak = (profile.streak || 0) + 1;
         toast.success(`Daily Streak: ${newStreak} Days! 🔥`, { icon: '🔥' });
-      } else if (lastActive === '') {
-        newStreak = 1;
       } else {
-        toast("Streak reset. Log in daily to maintain it!", { icon: '❄️' });
+        if (lastActive !== '') {
+          toast("Streak reset. Log in daily to maintain it!", { icon: '❄️' });
+        }
         newStreak = 1;
       }
 
@@ -161,7 +163,7 @@ export default function App() {
         streak: newStreak
       }).catch(e => console.error("Streak update failed:", e));
     }
-  }, [profile?.id]);
+  }, [profile?.id, user, isGuest, profile?.lastActive, profile?.streak]);
 
   if (loading) {
     return (
@@ -245,6 +247,7 @@ export default function App() {
       case 'vocab': return <VocabBank profile={profile!} />;
       case 'leaderboard': return <Leaderboard currentUserId={user.uid} isGuest={isGuest} />;
       case 'shop': return <Shop profile={profile!} />;
+      case 'support': return <Support profile={profile!} />;
       case 'profile': return <Profile 
         user={user} 
         profile={profile} 

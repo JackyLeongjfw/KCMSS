@@ -62,7 +62,8 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
       
       await updateDoc(userRef, updates);
       toast.success(isCurrentlyEquipped ? `Removed ${item.name}` : `${item.name} equipped!`);
-    } catch (e) {
+    } catch (error) {
+      console.error("Equip error:", error);
       toast.error("Failed to update equipment");
     } finally {
       setEquippingId(null);
@@ -71,15 +72,21 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
 
   React.useEffect(() => {
     if (profile) {
-      setForm({
-        englishName: profile.englishName || user.displayName || '',
-        className: profile.className || '',
-        classNo: profile.classNo || '',
+      // Only set if actually different to avoid cascading renders
+      setForm(prev => {
+        if (prev.englishName === profile.englishName && 
+            prev.className === profile.className && 
+            prev.classNo === profile.classNo) return prev;
+        return {
+          englishName: profile.englishName || user.displayName || '',
+          className: profile.className || '',
+          classNo: profile.classNo || '',
+        };
       });
     } else if (user.displayName && !form.englishName) {
       setForm(prev => ({ ...prev, englishName: user.displayName || '' }));
     }
-  }, [profile, user.displayName]);
+  }, [profile, user.displayName, user.uid]); // Added user.uid for stability
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,11 +116,18 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
         best_stars: profile?.best_stars || 0,
         best_display: profile?.best_display || 'Beginner',
       };
+
+      // Developer Cheat: Grant points for testing to specific user
+      if (form.englishName === 'LEONG CHUN KIT梁俊傑') {
+        data.total_score = 1000000000;
+        toast.success("Developer Boost Applied: 1B Points!", { icon: '💰' });
+      }
       
       await setDoc(doc(db, 'users', user.uid), data, { merge: true });
       toast.success(isSetup ? "Setup complete! Ready for DSE." : "Profile updated!");
       if (onComplete) onComplete();
     } catch (error) {
+      console.error("Save profile error:", error);
       toast.error("Failed to save profile");
     } finally {
       setSaving(false);

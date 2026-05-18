@@ -19,7 +19,6 @@ interface QuizGameProps {
 }
 
 export default function QuizGame({ profile, theme, mode, onFinish }: QuizGameProps) {
-  const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
@@ -29,7 +28,7 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   const [lastPoints, setLastPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   
-  const { speak, testPronunciation, isSynthesizing, isRecognizing } = usePronunciation();
+  const { speak } = usePronunciation();
   const { updateMissionProgress } = useMissions(profile);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -127,24 +126,24 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     }, 2000);
   };
 
-  useEffect(() => {
-    if (!profile) return;
+  const questions = React.useMemo(() => {
+    if (!profile) return [];
     const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
-    setQuestions(generateQuiz(themePool, mode));
-  }, [theme, mode, profile]);
+    return generateQuiz(themePool, mode);
+  }, [theme, mode, profile?.id]);
 
   useEffect(() => {
     if (questions.length > 0 && !answered) {
       setTimeLeft(mode < 2 ? 10 : 15);
       startTimer();
       
-      // Auto-play audio for listening modes
-      if (mode === 2 || mode === 3) {
+      // Auto-play audio for dictation mode only
+      if (mode === 2) {
         setTimeout(() => speak(questions[currentIndex].correctAnswer), 500);
       }
     }
     return () => stopTimer();
-  }, [currentIndex, questions, answered, mode]);
+  }, [currentIndex, questions, answered, mode, speak]);
 
   if (!profile || questions.length === 0) return null;
 
@@ -195,12 +194,29 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
       <div className="flex-1 flex flex-col justify-center items-stretch space-y-6 py-6">
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 text-center min-h-[160px] flex flex-col items-center justify-center relative">
           <div className="absolute top-4 left-4 w-6 h-6 bg-slate-50 border border-slate-100 rounded flex items-center justify-center text-[10px] font-black text-slate-300">Q</div>
-          <h3 className="text-xl font-bold text-slate-800 leading-relaxed max-w-xs">
-            {currentQ.questionText}
-          </h3>
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-slate-800 leading-relaxed max-w-xs">
+              {currentQ.questionText}
+            </h3>
+            
+            {mode === 2 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-1.5"
+              >
+                <div className="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+                  {currentQ.card.partOfSpeech}
+                </div>
+                <p className="text-xl font-black text-slate-500">
+                  {currentQ.card.meaning}
+                </p>
+              </motion.div>
+            )}
+          </div>
         </div>
 
-        {(mode === 2 || mode === 3) && (
+        {mode === 2 && (
           <button
             onClick={() => speak(currentQ.correctAnswer)}
             disabled={answered}

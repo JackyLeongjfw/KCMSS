@@ -37,7 +37,7 @@ export default function Dashboard({ profile, setActiveTab, onStartQuiz }: Dashbo
     },
     { 
       id: 'exercise', 
-      title: 'Writing Exercise', 
+      title: 'Exercise', 
       subtitle: 'Themes & Writing Practice', 
       icon: BookText, 
       color: 'bg-indigo-600', 

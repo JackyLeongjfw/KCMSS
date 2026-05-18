@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, BookOpen, Trophy, ShoppingBag, User } from 'lucide-react';
+import { Home, Sparkles, BookOpen, Trophy, ShoppingBag, User, BookText, MessageSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 
@@ -12,9 +12,11 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'ai', icon: Sparkles, label: 'AI Assistance' },
-    { id: 'vocab', icon: BookOpen, label: 'Revision' },
+    { id: 'quiz', icon: BookOpen, label: 'Exercise' },
+    { id: 'vocab', icon: BookText, label: 'Revision' },
     { id: 'leaderboard', icon: Trophy, label: 'Ranking' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
+    { id: 'support', icon: MessageSquare, label: 'Support' },
     { id: 'profile', icon: User, label: 'Me' },
   ];
 

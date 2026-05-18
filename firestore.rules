@@ -39,10 +39,13 @@ service cloud.firestore {
       allow update: if (isOwner(userId) || isAdmin()) && (
         // Validation for the resulting document
         isValidUser(incoming()) && 
-        // Only allow changes to these specific fields
-        incoming().diff(existing()).affectedKeys().hasAny([
-          'englishName', 'className', 'avatar', 'theme', 'xp', 'level', 'total_score', 
-          'lastLogin', 'setupComplete', 'missions', 'lastMissionUpdate', 'lastActive', 'streak'
+        // Only allow changes to these specific fields using hasOnly for security
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'englishName', 'className', 'classNo', 'avatar', 'theme', 'xp', 'level', 'total_score', 
+          'tokens', 'lastLogin', 'setupComplete', 'missions', 'lastMissionUpdate', 'lastActive', 
+          'streak', 'activeBadge', 'activeSkin', 'activeSuit', 'activeDecoration', 'activeTitle',
+          'inventory', 'themeProgress', 'aiVouchers', 'best_display', 'best_stars', 'best_sort_key',
+          'id', 'email', 'updatedAt'
         ])
       );
 
@@ -91,6 +94,14 @@ service cloud.firestore {
       ) && isValidRoom(incoming());
       
       allow delete: if isAdmin();
+    }
+
+    match /feedbacks/{feedbackId} {
+      allow create: if isSignedIn() && 
+        incoming().userId == request.auth.uid &&
+        incoming().message is string &&
+        incoming().message.size() < 5000;
+      allow read: if isAdmin();
     }
   }
 }
