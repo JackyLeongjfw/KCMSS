@@ -43,9 +43,18 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
 
   const [search, setSearch] = useState('');
   const [userVocab, setUserVocab] = useState<VocabCard[]>([]);
-  const [customThemes, setCustomThemes] = useState<string[]>([]);
   const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const { speak, testPronunciation, isSynthesizing } = usePronunciation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchUserVocab = async () => {
@@ -54,9 +63,6 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
         const querySnapshot = await getDocs(collection(db, 'users', profile.id, 'vocabulary'));
         const words = querySnapshot.docs.map(doc => ({ ...doc.data() } as VocabCard));
         setUserVocab(words);
-        
-        const themesSnapshot = await getDocs(collection(db, 'users', profile.id, 'themes'));
-        setCustomThemes(themesSnapshot.docs.map(d => d.id));
       } catch (e) {
         console.error("Vocab fetch error:", e);
       }
@@ -99,13 +105,9 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
       return acc;
     }, {} as Record<string, Record<string, VocabCard[]>>);
 
-    // Ensure custom themes with no words are also visible
-    customThemes.forEach(theme => {
-      if (!data[theme]) data[theme] = { 'General': [] };
-    });
-
+    // Ensure themes are correctly tracked
     return data;
-  }, [combinedVocab, customThemes]);
+  }, [combinedVocab]);
 
   const sortedThemes = Object.keys(groupedData).sort(themeSort);
 
@@ -300,28 +302,58 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
         </div>
       </div>
 
-      <div className="relative group">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Lookup vocabulary..."
-          className="w-full pl-10 pr-4 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-indigo-50 shadow-sm transition-all outline-none text-sm font-bold"
-        />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Lookup vocabulary..."
+            className="w-full pl-10 pr-4 py-4 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-indigo-50 shadow-sm transition-all outline-none text-sm font-bold"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => {
+              const themeKeys = sortedThemes.reduce((acc, t) => ({ ...acc, [t]: true }), {});
+              setExpandedThemes(themeKeys);
+              // Expand all sections too
+              const sectionKeys: Record<string, boolean> = {};
+              sortedThemes.forEach(theme => {
+                Object.keys(groupedData[theme]).forEach(sec => {
+                  sectionKeys[`${theme}-${sec}`] = true;
+                });
+              });
+              setExpandedSections(sectionKeys);
+            }}
+            className="px-4 py-2 bg-white text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+          >
+            Expand All
+          </button>
+          <button 
+            onClick={() => {
+              setExpandedThemes({});
+              setExpandedSections({});
+            }}
+            className="px-4 py-2 bg-white text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+          >
+            Collapse All
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">
         {search ? (
           <div className="space-y-2">
-            {filteredData.sort((a,b) => themeSort(a.theme, b.theme)).map((card) => (
+            {filteredData.sort((a,b) => themeSort(a.theme, b.theme)).map((card, idx) => (
               <VocabItem 
                 key={card.id || card.word} 
+                index={idx + 1}
                 card={card} 
                 speak={speak} 
                 isSynthesizing={isSynthesizing} 
                 onEdit={() => setEditingCard(card)}
-                onDelete={() => handleDeleteWord(card.word)}
               />
             ))}
           </div>
@@ -348,26 +380,57 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                 
                 {expandedThemes[theme] && (
                   <div className="px-6 pb-6 space-y-6">
-                    {sortedSections.map((section) => {
-                      const cards = sections[section];
-                      return (
-                        <div key={section} className="space-y-2">
-                          <h5 className="text-[10px] font-black text-indigo-700 uppercase tracking-widest px-1 italic">
-                            {section}
-                          </h5>
-                          {cards.map((card) => (
-                            <VocabItem 
-                              key={card.id || card.word} 
-                              card={card} 
-                              speak={speak} 
-                              isSynthesizing={isSynthesizing} 
-                              onEdit={() => setEditingCard(card)}
-                              onDelete={() => handleDeleteWord(card.word)}
-                            />
-                          ))}
-                        </div>
-                      );
-                    })}
+                    {(() => {
+                      let themeGlobalIdx = 0;
+                      return sortedSections.map((section) => {
+                        const sectionKey = `${theme}-${section}`;
+                        const isSectionExpanded = expandedSections[sectionKey];
+                        const sectionCards = sections[section];
+                        
+                        return (
+                          <div key={section} className="space-y-3">
+                            <button 
+                              onClick={() => setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
+                              className="w-full flex items-center justify-between px-1 border-b border-slate-50 pb-2 hover:bg-slate-50/50 transition-colors group/sec"
+                            >
+                              <h5 className="text-[10px] font-black text-indigo-700 uppercase tracking-widest italic flex items-center gap-1">
+                                <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", !isSectionExpanded && "-rotate-90")} />
+                                {section}
+                                <span className="ml-2 text-[8px] text-slate-300 normal-case font-bold">({sectionCards.length} words)</span>
+                              </h5>
+                              <div className="text-[8px] font-black text-slate-300 opacity-0 group-hover/sec:opacity-100 uppercase tracking-widest">
+                                {isSectionExpanded ? 'Click to collapse' : 'Click to expand'}
+                              </div>
+                            </button>
+                            
+                            {isSectionExpanded && (
+                              <div className="space-y-2">
+                                {sectionCards.map((card) => {
+                                  themeGlobalIdx++;
+                                  return (
+                                    <VocabItem 
+                                      key={card.id || card.word} 
+                                      index={themeGlobalIdx}
+                                      card={card} 
+                                      speak={speak} 
+                                      isSynthesizing={isSynthesizing} 
+                                      onEdit={() => setEditingCard(card)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            )}
+                            
+                            {!isSectionExpanded && (
+                              <div className="hidden">
+                                {/* Hidden but increment counter so numbering remains consistent even when collapsed */}
+                                {sectionCards.forEach(() => themeGlobalIdx++)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>
@@ -375,6 +438,17 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
           })
         )}
       </div>
+
+      <AnimatePresence>
+        {showBackToTop && (
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-8 right-8 bg-indigo-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-40 border-4 border-white"
+          >
+            <ChevronUp className="h-6 w-6" />
+          </button>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {editingCard && (
@@ -431,36 +505,44 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   );
 }
 
-function VocabItem({ card, speak, isSynthesizing, onEdit }: { 
+function VocabItem({ card, index, speak, isSynthesizing, onEdit }: { 
   card: VocabCard, 
+  index?: number,
   speak: (text: string) => void, 
   isSynthesizing: boolean, 
   onEdit: () => void
 }) {
   return (
     <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-indigo-200 hover:bg-white hover:shadow-md transition-all group">
-      <div className="flex-1 cursor-pointer" onClick={onEdit}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-black text-slate-800 text-sm italic group-hover:text-indigo-600 transition-colors uppercase">{card.word}</span>
-          <span className="text-[8px] text-slate-400 font-serif font-black uppercase tracking-tighter opacity-80 px-1.5 py-0.5 border border-slate-200 rounded">
-            {card.partOfSpeech}
+      <div className="flex-1 cursor-pointer flex gap-3" onClick={onEdit}>
+        {index !== undefined && (
+          <span className="text-[10px] font-black text-slate-300 mt-1 pointer-events-none tabular-nums min-w-[1.2rem]">
+            {index.toString().padStart(2, '0')}
           </span>
-          {card.isMaster && (
-            <span className="text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
-              Master
+        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-black text-slate-800 text-sm italic group-hover:text-indigo-600 transition-colors uppercase">{card.word}</span>
+            <span className="text-[8px] text-slate-400 font-serif font-black uppercase tracking-tighter opacity-80 px-1.5 py-0.5 border border-slate-200 rounded">
+              {card.partOfSpeech}
             </span>
-          )}
-          {card.familiarity && (
-             <span className={cn(
-               "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest",
-               card.familiarity === 'mastered' ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
-             )}>
-               {card.familiarity === 'mastered' ? 'Mastered' : 'Hard'}
-             </span>
-          )}
+            {card.isMaster && (
+              <span className="text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
+                Master
+              </span>
+            )}
+            {card.familiarity && (
+               <span className={cn(
+                 "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest",
+                 card.familiarity === 'mastered' ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
+               )}>
+                 {card.familiarity === 'mastered' ? 'Mastered' : 'Hard'}
+               </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 font-medium leading-tight">{card.meaning}</p>
+          <p className="text-[10px] text-slate-400 mt-2 italic line-clamp-1">{card.sentence}</p>
         </div>
-        <p className="text-xs text-slate-500 font-medium leading-tight">{card.meaning}</p>
-        <p className="text-[10px] text-slate-400 mt-2 italic line-clamp-1">{card.sentence}</p>
       </div>
       <div className="flex items-center gap-2">
         <button

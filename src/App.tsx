@@ -184,7 +184,7 @@ export default function App() {
           <div className="bg-white p-4 rounded-full inline-block mb-6 shadow-xl">
             <span className="text-4xl text-indigo-600">🎓</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">KCMSS ENG APP</h1>
+          <h1 className="text-3xl font-bold mb-2">ENGLISH</h1>
           <p className="text-indigo-100 mb-8 max-w-xs mx-auto">
             Your AI-powered companion for DSE English success. 
             Sign in with your school email to begin.
@@ -275,7 +275,7 @@ export default function App() {
           </div>
           <div className="flex flex-col">
             <span className="text-[8px] font-bold uppercase tracking-widest opacity-80 leading-none">KCMSS</span>
-            <span className="text-sm font-black leading-none">AI ENGLISH</span>
+            <span className="text-sm font-black leading-none">ENGLISH</span>
           </div>
         </div>
 
