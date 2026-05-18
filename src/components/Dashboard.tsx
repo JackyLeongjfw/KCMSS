@@ -1,11 +1,10 @@
 import React from 'react';
 import { UserProfile } from '../types';
-import { Sparkles, BookText, BookOpen, GraduationCap, ChevronRight, Lock, Target, Gift, CheckCircle2, Swords, Zap } from 'lucide-react';
+import { Sparkles, BookText, GraduationCap, ChevronRight, Lock, Target, Gift, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { TEACHER_PASSWORD } from '../constants';
-import CharacterPreview from './CharacterPreview';
 
 interface DashboardProps {
   profile: UserProfile | null;
@@ -137,28 +136,7 @@ export default function Dashboard({ profile, setActiveTab, onStartQuiz }: Dashbo
         </section>
       )}
 
-      {/* Battle Arena CTA */}
-      <section 
-        onClick={() => setActiveTab('battle')}
-        className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200 cursor-pointer group relative overflow-hidden"
-      >
-        <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
-           <Swords className="w-40 h-40" />
-        </div>
-        <div className="relative z-10 flex items-center gap-6">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-            <Zap className="h-8 w-8 text-amber-300" />
-          </div>
-          <div>
-            <h3 className="text-xl font-black italic tracking-tighter uppercase mb-1">Live Battle Arena</h3>
-            <p className="text-indigo-200 text-xs font-medium">Fight 1v1 for double XP and Glory!</p>
-          </div>
-          <div className="ml-auto bg-white/10 p-2 rounded-full">
-            <ChevronRight className="h-6 w-6" />
-          </div>
-        </div>
-      </section>
-
+      {/* Quiz History Tip */}
       <div className="flex justify-between items-center px-1">
         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Learning Hub</h3>
         <button 

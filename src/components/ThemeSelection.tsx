@@ -11,10 +11,16 @@ interface ThemeSelectionProps {
 
 export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProps) {
   const [selectedTheme, setSelectedTheme] = React.useState<string | null>(null);
-  const numericalSort = (a: string, b: string) => {
+  const themeSort = (a: string, b: string) => {
+    const matchA = a.match(/S(\d+)M(\d+)/i);
+    const matchB = b.match(/S(\d+)M(\d+)/i);
+    if (matchA && matchB) {
+      if (matchA[1] !== matchB[1]) return parseInt(matchA[1]) - parseInt(matchB[1]);
+      return parseInt(matchA[2]) - parseInt(matchB[2]);
+    }
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   };
-  const themes = Array.from(new Set(vocabData.map(v => v.theme))).sort(numericalSort);
+  const themes = Array.from(new Set(vocabData.map(v => v.theme))).sort(themeSort);
   
   const modes = [
     { name: 'L1: Meaning', diff: 'Easy' },
@@ -36,10 +42,7 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
   };
 
   const isLocked = (theme: string, modeIdx: number) => {
-    if (modeIdx === 0) return false;
-    const progress = getThemeProgress(theme);
-    // Level is unlocked if previous level score is >= 80
-    return (progress[modeIdx - 1] || 0) < 80;
+    return false;
   };
 
   if (selectedTheme) {

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { auth, db, signOut } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { User } from 'firebase/auth';
 import { UserProfile } from '../types';
-import { doc, setDoc } from 'firebase/firestore';
-import { Settings, LogOut, ChevronRight, User as UserIcon, Shield, Check, Sparkles } from 'lucide-react';
+import { SHOP_ITEMS } from '../constants';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { Settings, LogOut, ChevronRight, User as UserIcon, Shield, Check, Package, ShoppingBag } from 'lucide-react';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 import CharacterPreview from './CharacterPreview';
@@ -23,6 +24,50 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
     classNo: '',
   });
   const [saving, setSaving] = useState(false);
+  const [equippingId, setEquippingId] = useState<string | null>(null);
+
+  const handleEquip = async (itemId: string) => {
+    if (!profile || profile.id === 'guest_user') return;
+    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return;
+
+    setEquippingId(itemId);
+    try {
+      const userRef = doc(db, 'users', profile.id);
+      const updates: Partial<UserProfile> = {};
+      
+      const isCurrentlyEquipped = 
+        (item.category === 'badge' && profile.activeBadge === item.icon) ||
+        (item.category === 'skin' && profile.activeSkin === item.icon) ||
+        (item.category === 'suit' && profile.activeSuit === item.icon) ||
+        (item.category === 'decoration' && profile.activeDecoration === item.icon) ||
+        (item.category === 'avatar' && profile.avatar === item.icon) ||
+        (item.category === 'title' && profile.activeTitle === item.name);
+
+      if (isCurrentlyEquipped) {
+        if (item.category === 'badge') updates.activeBadge = null;
+        if (item.category === 'skin') updates.activeSkin = null;
+        if (item.category === 'suit') updates.activeSuit = null;
+        if (item.category === 'decoration') updates.activeDecoration = null;
+        if (item.category === 'avatar') updates.avatar = 'student_1';
+        if (item.category === 'title') updates.activeTitle = null;
+      } else {
+        if (item.category === 'badge') updates.activeBadge = item.icon;
+        if (item.category === 'skin') updates.activeSkin = item.icon;
+        if (item.category === 'suit') updates.activeSuit = item.icon;
+        if (item.category === 'decoration') updates.activeDecoration = item.icon;
+        if (item.category === 'avatar') updates.avatar = item.icon;
+        if (item.category === 'title') updates.activeTitle = item.name;
+      }
+      
+      await updateDoc(userRef, updates);
+      toast.success(isCurrentlyEquipped ? `Removed ${item.name}` : `${item.name} equipped!`);
+    } catch (e) {
+      toast.error("Failed to update equipment");
+    } finally {
+      setEquippingId(null);
+    }
+  };
 
   React.useEffect(() => {
     if (profile) {
@@ -171,6 +216,68 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
               <span className="block text-xl font-black text-slate-800">{profile?.best_stars || 0}</span>
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Stars</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+              <Package className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Your Inventory</h4>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tap to equip items</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'shop' }))}
+            className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest flex items-center gap-1"
+          >
+            <ShoppingBag className="h-3 w-3" />
+            Get More
+          </button>
+        </div>
+        
+        <div className="p-4 bg-slate-50/50">
+          <div className="flex flex-wrap gap-2">
+            {profile?.inventory && profile.inventory.length > 0 ? (
+              profile.inventory.map(itemId => {
+                const item = SHOP_ITEMS.find(i => i.id === itemId);
+                if (!item || item.category === 'title' || item.category === 'token') return null;
+                
+                const isActive = 
+                  (item.category === 'badge' && profile.activeBadge === item.icon) ||
+                  (item.category === 'skin' && profile.activeSkin === item.icon) ||
+                  (item.category === 'suit' && profile.activeSuit === item.icon) ||
+                  (item.category === 'decoration' && profile.activeDecoration === item.icon) ||
+                  (item.category === 'avatar' && profile.avatar === item.icon) ||
+                  (item.category === 'title' && profile.activeTitle === item.name);
+
+                return (
+                  <button
+                    key={itemId}
+                    onClick={() => handleEquip(itemId)}
+                    disabled={equippingId !== null}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all active:scale-95",
+                      isActive 
+                        ? "bg-white border-indigo-500 shadow-md ring-2 ring-indigo-100" 
+                        : "bg-white border-transparent hover:border-slate-200 text-slate-400"
+                    )}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-[10px] font-black uppercase tracking-tight text-slate-700">{item.name}</span>
+                    {isActive && <Check className="h-3 w-3 text-indigo-600" />}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="text-center w-full py-4 space-y-2">
+                 <p className="text-[11px] font-bold text-slate-400">Inventory is empty</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

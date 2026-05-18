@@ -31,6 +31,7 @@ export interface UserProfile {
   activeSkin?: string | null;
   activeSuit?: string | null;
   activeDecoration?: string | null;
+  activeTitle?: string | null;
   setupComplete: boolean;
   email: string;
   themeProgress?: Record<string, number[]>; // theme -> [scoreL1, scoreL2, ...]
@@ -40,6 +41,8 @@ export interface UserProfile {
   lastActive?: string;
   lastMissionUpdate?: any;
   missions?: DailyMission[];
+  aiAssistantUses?: number;
+  aiVouchers?: string[];
 }
 
 export interface BattlePlayer {
@@ -84,7 +87,7 @@ export interface ShopItem {
   name: string;
   price: number;
   icon: string;
-  category: 'badge' | 'avatar' | 'title' | 'skin' | 'suit' | 'decoration';
+  category: 'badge' | 'avatar' | 'title' | 'skin' | 'suit' | 'decoration' | 'token';
 }
 
 export interface EssaySuggestion {

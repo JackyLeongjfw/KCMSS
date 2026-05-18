@@ -6,7 +6,6 @@ import { UserProfile } from './types';
 import Dashboard from './components/Dashboard';
 import AIPlatform from './components/AIPlatform';
 import VocabBank from './components/VocabBank';
-import BattleArena from './components/BattleArena';
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Shop from './components/Shop';
@@ -244,7 +243,6 @@ export default function App() {
       case 'ai': return <AIPlatform profile={profile!} />;
       case 'quiz': return <ThemeSelection profile={profile!} onSelect={(theme, mode) => setQuizConfig({ theme, mode })} />;
       case 'vocab': return <VocabBank profile={profile!} />;
-      case 'battle': return <BattleArena profile={profile!} />;
       case 'leaderboard': return <Leaderboard currentUserId={user.uid} isGuest={isGuest} />;
       case 'shop': return <Shop profile={profile!} />;
       case 'profile': return <Profile 

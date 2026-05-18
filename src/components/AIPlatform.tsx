@@ -3,13 +3,15 @@ import vocabData from '../data/vocab_master.json';
 import { UserProfile, EssaySuggestion } from '../types';
 import { analyzeEssay } from '../services/geminiService';
 import { usePronunciation } from '../hooks/usePronunciation';
-import { Sparkles, Send, Volume2, Book, Mic, CheckCircle2, X, Plus, History, Trash2, Bookmark } from 'lucide-react';
+import { Sparkles, Send, Volume2, Book, Mic, CheckCircle2, X, Plus, History, Trash2, Bookmark, Lock, ShoppingBag } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
 import { doc, updateDoc, serverTimestamp, setDoc, collection, query, orderBy, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useMissions } from '../hooks/useMissions';
+
+import { ADMIN_AI_PASSWORD } from '../constants';
 
 interface SavedAnalysis {
   id: string;
@@ -24,6 +26,8 @@ interface AIPlatformProps {
 }
 
 export default function AIPlatform({ profile }: AIPlatformProps) {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [passInput, setPassInput] = useState('');
   const [essay, setEssay] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<{
@@ -70,6 +74,75 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
   }, [profile?.id]);
 
   if (!profile) return null;
+
+  const handleAuthorize = async () => {
+    if (passInput === ADMIN_AI_PASSWORD) {
+      setIsAuthorized(true);
+      toast.success("Welcome, Admin!");
+      return;
+    }
+
+    if (profile.aiVouchers?.includes(passInput.trim().toUpperCase())) {
+      const voucher = passInput.trim().toUpperCase();
+      try {
+        const userRef = doc(db, 'users', profile.id);
+        const filteredVouchers = (profile.aiVouchers || []).filter(v => v !== voucher);
+        await updateDoc(userRef, {
+          aiVouchers: filteredVouchers
+        });
+        setIsAuthorized(true);
+        toast.success("Voucher accepted! One-time access granted.");
+      } catch (error) {
+        toast.error("Authorization failed.");
+      }
+      return;
+    }
+
+    toast.error("Incorrect password or voucher code.");
+  };
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-[2rem] border border-slate-200 shadow-xl space-y-6">
+        <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center">
+          <Lock className="h-10 w-10 text-indigo-600" />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-black italic tracking-tighter">AI Assistant Restricted</h2>
+          <p className="text-sm text-slate-500 font-medium max-w-xs mx-auto">
+            This module is reserved for Admins or requires a one-time access code from the Emporium.
+          </p>
+        </div>
+        
+        <div className="w-full space-y-3">
+          <input 
+            type="password"
+            value={passInput}
+            onChange={(e) => setPassInput(e.target.value)}
+            placeholder="Enter Admin Password or Access Code"
+            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 text-center font-bold tracking-widest"
+          />
+          <button 
+            onClick={handleAuthorize}
+            className="w-full py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all"
+          >
+            Authenticate Access
+          </button>
+        </div>
+
+        <div className="pt-4 border-t border-slate-100 w-full text-center">
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Don't have a code?</p>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('changeTab', { detail: 'shop' }))}
+            className="flex items-center gap-2 mx-auto bg-amber-500 px-6 py-2 rounded-full text-white text-[10px] font-black uppercase tracking-widest shadow-md shadow-amber-100"
+          >
+            <ShoppingBag className="h-3 w-3" />
+            Buy Access Token (10,000 PTS)
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleTestPronunciation = async (text: string) => {
     const score = await testPronunciation(text);

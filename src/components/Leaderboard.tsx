@@ -16,7 +16,6 @@ interface LeaderboardProps {
 export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filter, setFilter] = useState<'global' | 'class'>('global');
-  const [myClass, setMyClass] = useState<string | null>(null);
 
   const MOCK_LEADERBOARD: UserProfile[] = [
     {
@@ -83,14 +82,14 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
 
   useEffect(() => {
     if (isGuest) {
-      setUsers(MOCK_LEADERBOARD.sort((a, b) => b.total_score - a.total_score));
+      setUsers([...MOCK_LEADERBOARD].sort((a, b) => (b.xp || 0) - (a.xp || 0)));
       return;
     }
 
     const q = query(
       collection(db, 'users'), 
       where('setupComplete', '==', true),
-      orderBy('total_score', 'desc'), 
+      orderBy('xp', 'desc'), 
       limit(50)
     );
     
@@ -185,7 +184,7 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter shrink-0">
-                      {user.className} • {user.best_display?.replace(/\([^\)]+\)/, '') || 'Novice'}
+                      {user.className} • {user.best_display?.replace(/\([^)]+\)/, '') || 'Novice'}
                     </p>
                     <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden max-w-[60px]">
                       <motion.div 
@@ -203,7 +202,7 @@ export default function Leaderboard({ currentUserId, isGuest }: LeaderboardProps
                       "text-sm font-black",
                       isTop3 ? "text-amber-600" : "text-slate-700"
                     )}>
-                      {user.total_score.toLocaleString()}
+                      {(user.xp || 0).toLocaleString()} <span className="text-[10px] font-bold text-slate-400">XP</span>
                     </p>
                     <div className="flex gap-0.5">
                       {[...Array(3)].map((_, idx) => (

@@ -3,10 +3,10 @@ import { UserProfile, VocabCard } from '../types';
 import vocabData from '../data/vocab_master.json';
 import { generateQuiz } from '../lib/quizUtils';
 import { usePronunciation } from '../hooks/usePronunciation';
-import { Volume2, Mic, Send, Timer, Star, CheckCircle2, XCircle } from 'lucide-react';
+import { Volume2, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { doc, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import toast from 'react-hot-toast';
 import { useMissions } from '../hooks/useMissions';
@@ -67,7 +67,7 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
         newProgress[theme] = themeLevels;
 
-        const accuracyBonus = scorePercent === 100 ? 50 : 0;
+        const accuracyBonus = scorePercent === 100 ? 10 : scorePercent >= 80 ? 5 : 0;
         const totalPoints = score + accuracyBonus;
         
         // XP calculation: 1 XP per point
@@ -75,7 +75,7 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         // Level logic: Level = Floor(Sqrt(XP/100)) + 1
         const newLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
 
-        if (accuracyBonus > 0) toast.success("Perfect Score! +50 Accuracy Bonus ✨");
+        if (accuracyBonus > 0) toast.success(`Quiz Complete! +${accuracyBonus} Accuracy Bonus ✨`);
 
         await updateDoc(userRef, {
           total_score: increment(totalPoints),
@@ -101,19 +101,13 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     const q = questions[currentIndex];
     const isCorrect = answer.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
 
-    let points = 0;
     if (isCorrect) {
-      const base = mode < 2 ? 5 : mode < 4 ? 10 : 20;
-      const comboBonus = Math.min(streak * (mode < 2 ? 2 : mode < 4 ? 5 : 10), 100);
+      const pointsPerQuestion = 4;
       
-      // Daily Streak Multiplier: +5% per streak day (up to +50%)
-      const streakMult = 1 + (Math.min(profile.streak || 0, 10) * 0.05);
-      points = Math.round((base + comboBonus) * streakMult);
-      
-      setScore(s => s + points);
+      setScore(s => s + pointsPerQuestion);
       setCorrectCount(c => c + 1);
       setStreak(s => s + 1);
-      setLastPoints(points);
+      setLastPoints(pointsPerQuestion);
       updateMissionProgress('quiz_correct', 1);
     } else {
       setStreak(0);

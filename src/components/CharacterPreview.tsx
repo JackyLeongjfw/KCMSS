@@ -16,42 +16,57 @@ export default function CharacterPreview({ profile, size = 'md' }: CharacterPrev
   };
 
   return (
-    <div className={cn(
-      "relative flex items-center justify-center bg-slate-100 border border-slate-200 overflow-hidden shadow-inner shrink-0",
-      containerClasses[size]
-    )}>
-      {/* Decoration / Aura */}
-      {profile.activeDecoration && (
+    <div className="flex flex-col items-center">
+      {profile.activeTitle && (
         <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-          className="absolute inset-0 flex items-center justify-center opacity-40 text-7xl select-none pointer-events-none"
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "mb-2 px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 shadow-xl",
+            size === 'sm' ? "text-[6px]" : size === 'md' ? "text-[8px]" : "text-[10px]"
+          )}
         >
-          {profile.activeDecoration}
+          <span className="font-black text-white uppercase tracking-widest italic">{profile.activeTitle}</span>
         </motion.div>
       )}
+      
+      <div className={cn(
+        "relative flex items-center justify-center bg-slate-100 border border-slate-200 overflow-hidden shadow-inner shrink-0",
+        containerClasses[size]
+      )}>
+        {/* Decoration / Aura */}
+        {profile.activeDecoration && (
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 flex items-center justify-center opacity-40 text-7xl select-none pointer-events-none"
+          >
+            {profile.activeDecoration}
+          </motion.div>
+        )}
 
-      {/* Main Character Body (Skin) */}
-      <div className="relative z-10 transition-transform hover:scale-110 cursor-pointer">
-        {profile.activeSkin || '👨‍🎓'}
+        {/* Main Character Body (Skin or Avatar) */}
+        <div className="relative z-10 transition-transform hover:scale-110 cursor-pointer">
+          {profile.activeSkin || (profile.avatar && profile.avatar !== 'default' && profile.avatar !== 'student_1' ? profile.avatar : '👨‍🎓')}
+        </div>
+
+        {/* Suit / Equipment overlay */}
+        {profile.activeSuit && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none translate-y-3 opacity-80">
+            <span className="text-3xl filter drop-shadow-md">{profile.activeSuit}</span>
+          </div>
+        )}
+
+        {/* Badge Overlay */}
+        {profile.activeBadge && (
+          <div className={cn(
+            "absolute p-1 bg-white rounded-full shadow-md border border-slate-100 flex items-center justify-center z-30",
+            size === 'sm' ? "-bottom-1 -right-1 text-[8px]" : "-bottom-2 -right-2 text-sm"
+          )}>
+            {profile.activeBadge}
+          </div>
+        )}
       </div>
-
-      {/* Suit / Equipment overlay */}
-      {profile.activeSuit && (
-        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none translate-y-3 opacity-80">
-          <span className="text-3xl filter drop-shadow-md">{profile.activeSuit}</span>
-        </div>
-      )}
-
-      {/* Badge Overlay */}
-      {profile.activeBadge && (
-        <div className={cn(
-          "absolute p-1 bg-white rounded-full shadow-md border border-slate-100 flex items-center justify-center z-30",
-          size === 'sm' ? "-bottom-1 -right-1 text-[8px]" : "-bottom-2 -right-2 text-sm"
-        )}>
-          {profile.activeBadge}
-        </div>
-      )}
     </div>
   );
 }

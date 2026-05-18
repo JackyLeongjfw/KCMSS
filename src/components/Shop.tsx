@@ -26,16 +26,41 @@ export default function Shop({ profile }: ShopProps) {
       setBuying(item.id);
       try {
         const userRef = doc(db, 'users', profile.id);
-        const updates: any = {};
-        if (item.category === 'badge') updates.activeBadge = item.icon;
-        if (item.category === 'skin') updates.activeSkin = item.icon;
-        if (item.category === 'suit') updates.activeSuit = item.icon;
-        if (item.category === 'decoration') updates.activeDecoration = item.icon;
+        const updates: Partial<UserProfile> = {};
         
-        await updateDoc(userRef, updates);
-        toast.success(`Equipped ${item.name}!`);
+        const isCurrentlyEquipped = 
+          (item.category === 'badge' && profile.activeBadge === item.icon) ||
+          (item.category === 'skin' && profile.activeSkin === item.icon) ||
+          (item.category === 'suit' && profile.activeSuit === item.icon) ||
+          (item.category === 'decoration' && profile.activeDecoration === item.icon) ||
+          (item.category === 'avatar' && profile.avatar === item.icon) ||
+          (item.category === 'title' && profile.activeTitle === item.name);
+
+        if (isCurrentlyEquipped) {
+          // Unequip
+          if (item.category === 'badge') updates.activeBadge = null;
+          if (item.category === 'skin') updates.activeSkin = null;
+          if (item.category === 'suit') updates.activeSuit = null;
+          if (item.category === 'decoration') updates.activeDecoration = null;
+          if (item.category === 'avatar') updates.avatar = 'student_1'; // Reset to default
+          if (item.category === 'title') updates.activeTitle = null;
+          
+          await updateDoc(userRef, updates);
+          toast.success(`Removed ${item.name}`);
+        } else {
+          // Equip
+          if (item.category === 'badge') updates.activeBadge = item.icon;
+          if (item.category === 'skin') updates.activeSkin = item.icon;
+          if (item.category === 'suit') updates.activeSuit = item.icon;
+          if (item.category === 'decoration') updates.activeDecoration = item.icon;
+          if (item.category === 'avatar') updates.avatar = item.icon;
+          if (item.category === 'title') updates.activeTitle = item.name;
+          
+          await updateDoc(userRef, updates);
+          toast.success(`Equipped ${item.name}!`);
+        }
       } catch (error) {
-        toast.error("Failed to equip item.");
+        toast.error("Failed to update equipment.");
       } finally {
         setBuying(null);
       }
@@ -54,17 +79,26 @@ export default function Shop({ profile }: ShopProps) {
       const userRef = doc(db, 'users', profile.id);
       const updates: any = {
         total_score: profile.total_score - item.price,
-        inventory: arrayUnion(item.id),
       };
 
-      // Auto-equip based on category
-      if (item.category === 'badge') updates.activeBadge = item.icon;
-      if (item.category === 'skin') updates.activeSkin = item.icon;
-      if (item.category === 'suit') updates.activeSuit = item.icon;
-      if (item.category === 'decoration') updates.activeDecoration = item.icon;
+      if (item.category === 'token') {
+        const voucher = Math.random().toString(36).substring(2, 8).toUpperCase();
+        updates.aiVouchers = arrayUnion(voucher);
+        await updateDoc(userRef, updates);
+        toast.success(`Purchased! Your one-time AI Code is: ${voucher}`, { duration: 10000 });
+      } else {
+        updates.inventory = arrayUnion(item.id);
+        // Auto-equip based on category
+        if (item.category === 'badge') updates.activeBadge = item.icon;
+        if (item.category === 'skin') updates.activeSkin = item.icon;
+        if (item.category === 'suit') updates.activeSuit = item.icon;
+        if (item.category === 'decoration') updates.activeDecoration = item.icon;
+        if (item.category === 'avatar') updates.avatar = item.icon;
+        if (item.category === 'title') updates.activeTitle = item.name;
 
-      await updateDoc(userRef, updates);
-      toast.success(`Purchased ${item.name}! ` + (item.category !== 'title' ? 'Equipped for your profile.' : ''));
+        await updateDoc(userRef, updates);
+        toast.success(`Purchased ${item.name}! ` + (item.category !== 'token' ? 'Equipped for your profile.' : ''));
+      }
     } catch (error) {
       toast.error("Purchase failed. Please try again.");
     } finally {
@@ -72,7 +106,7 @@ export default function Shop({ profile }: ShopProps) {
     }
   };
 
-  const categories = ['badge', 'skin', 'suit', 'decoration', 'title', 'avatar'] as const;
+  const categories = ['badge', 'skin', 'suit', 'decoration', 'title', 'avatar', 'token'] as const;
 
   return (
     <div className="space-y-6 pb-24">
@@ -110,7 +144,9 @@ export default function Shop({ profile }: ShopProps) {
                     (cat === 'badge' && profile.activeBadge === item.icon) ||
                     (cat === 'skin' && profile.activeSkin === item.icon) ||
                     (cat === 'suit' && profile.activeSuit === item.icon) ||
-                    (cat === 'decoration' && profile.activeDecoration === item.icon);
+                    (cat === 'decoration' && profile.activeDecoration === item.icon) ||
+                    (cat === 'avatar' && profile.avatar === item.icon) ||
+                    (cat === 'title' && profile.activeTitle === item.name);
 
                   return (
                     <div 

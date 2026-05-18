@@ -13,6 +13,16 @@ interface RevisionCenterProps {
   profile: UserProfile;
 }
 
+const themeSort = (a: string, b: string) => {
+  const matchA = a.match(/S(\d+)M(\d+)/i);
+  const matchB = b.match(/S(\d+)M(\d+)/i);
+  if (matchA && matchB) {
+    if (matchA[1] !== matchB[1]) return parseInt(matchA[1]) - parseInt(matchB[1]);
+    return parseInt(matchA[2]) - parseInt(matchB[2]);
+  }
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+};
+
 const numericalSort = (a: string, b: string) => {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 };
@@ -75,7 +85,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     return acc;
   }, {} as Record<string, Record<string, VocabCard[]>>);
 
-  const sortedThemes = Object.keys(groupedData).sort(numericalSort);
+  const sortedThemes = Object.keys(groupedData).sort(themeSort);
 
   const toggleTheme = (theme: string) => {
     setExpandedThemes(prev => ({ ...prev, [theme]: !prev[theme] }));
@@ -217,7 +227,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Filter by Theme</label>
             <div className="space-y-1 max-h-40 overflow-y-auto px-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50">
-              {Array.from(new Set(combinedVocab.map(v => v.theme))).sort(numericalSort).map(theme => (
+              {Array.from(new Set(combinedVocab.map(v => v.theme))).sort(themeSort).map(theme => (
                 <label key={theme} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors text-[11px] font-bold text-slate-700">
                   <input 
                     type="checkbox" 
@@ -307,7 +317,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
       <div className="space-y-4">
         {search ? (
           <div className="space-y-2">
-            {filteredData.sort((a,b) => numericalSort(a.theme, b.theme)).map((card) => (
+            {filteredData.sort((a,b) => themeSort(a.theme, b.theme)).map((card) => (
               <VocabItem 
                 key={card.id || card.word} 
                 card={card} 

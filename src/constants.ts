@@ -38,7 +38,9 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'badge_immortal', name: 'Immortal Scholar', price: 100000, icon: '♾️', category: 'badge' },
   { id: 'avatar_eagle', name: 'Eagle Eye', price: 1500, icon: '🦅', category: 'avatar' },
   { id: 'avatar_robot', name: 'AI Scholar', price: 2500, icon: '🤖', category: 'avatar' },
+  { id: 'token_ai', name: 'AI Assistant Access', price: 10000, icon: '⚡', category: 'token' },
 ];
 
 export const TEACHER_PASSWORD = "KCMENG2431";
+export const ADMIN_AI_PASSWORD = "ADMIN_AI_2024_KCMSS";
 export const PASS_PERCENTAGE = 0.8;
