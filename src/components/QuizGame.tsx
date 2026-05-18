@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { UserProfile, VocabCard } from '../types';
 import vocabData from '../data/vocab_master.json';
 import { generateQuiz } from '../lib/quizUtils';
@@ -32,24 +32,17 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   const { updateMissionProgress } = useMissions(profile);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const stopTimer = () => {
+  const questions = useMemo(() => {
+    if (!profile) return [];
+    const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
+    return generateQuiz(themePool, mode);
+  }, [theme, mode, profile]);
+
+  const stopTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-  };
+  }, []);
 
-  const startTimer = () => {
-    stopTimer();
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          handleAnswer(''); // Timeout
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const handleFinish = async () => {
+  const handleFinish = useCallback(async () => {
     if (!profile) return;
     const scorePercent = Math.round((correctCount / (questions.length || 1)) * 100);
     const passed = scorePercent >= 80;
@@ -89,9 +82,9 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
       console.error(error);
     }
     onFinish();
-  };
+  }, [profile, correctCount, questions.length, updateMissionProgress, score, theme, mode, onFinish]);
 
-  const handleAnswer = async (answer: string) => {
+  const handleAnswer = useCallback(async (answer: string) => {
     if (answered) return;
     stopTimer();
     setAnswered(true);
@@ -124,13 +117,20 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         handleFinish();
       }
     }, 2000);
-  };
+  }, [answered, stopTimer, questions, currentIndex, mode, updateMissionProgress, handleFinish]);
 
-  const questions = React.useMemo(() => {
-    if (!profile) return [];
-    const themePool = (vocabData as VocabCard[]).filter(v => v.theme === theme);
-    return generateQuiz(themePool, mode);
-  }, [theme, mode, profile]);
+  const startTimer = useCallback(() => {
+    stopTimer();
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleAnswer(''); // Timeout
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [stopTimer, handleAnswer]);
 
   useEffect(() => {
     if (questions.length > 0 && !answered) {

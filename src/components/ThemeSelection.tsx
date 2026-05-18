@@ -40,7 +40,7 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
     return Math.round((completedCount / modes.length) * 100);
   };
 
-  const isLocked = (theme: string, modeIdx: number) => {
+  const isLocked = () => {
     return false;
   };
 

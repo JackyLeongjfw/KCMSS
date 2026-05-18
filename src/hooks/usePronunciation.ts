@@ -59,7 +59,7 @@ export function usePronunciation() {
       setIsRecognizing(true);
       recognition.start();
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: { results: { [key: number]: { [key: number]: { transcript: string; confidence: number } } } }) => {
         const transcript = event.results[0][0].transcript.toLowerCase();
         const confidence = event.results[0][0].confidence;
         
@@ -67,16 +67,16 @@ export function usePronunciation() {
         const cleanTarget = targetText.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
         const cleanResult = transcript.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
         
-        let score = 0;
+        let calculatedScore = 0;
         if (cleanResult === cleanTarget) {
-          score = 100;
+          calculatedScore = 100;
         } else {
           // Word-based scoring
           const targetWords = cleanTarget.split(/\s+/).filter(Boolean);
           const resultWords = cleanResult.split(/\s+/).filter(Boolean);
           
           if (targetWords.length === 0) {
-            score = 0;
+            calculatedScore = 0;
           } else {
             // Find matches and calculate similarity
             let matches = 0;
@@ -97,12 +97,12 @@ export function usePronunciation() {
             
             // Adjust score based on confidence and length difference
             const lengthRatio = Math.min(cleanResult.length, cleanTarget.length) / Math.max(cleanResult.length, cleanTarget.length);
-            score = Math.floor(wordScore * 0.8 + (confidence * 100) * 0.1 + (lengthRatio * 100) * 0.1);
+            calculatedScore = Math.floor(wordScore * 0.8 + (confidence * 100) * 0.1 + (lengthRatio * 100) * 0.1);
           }
         }
 
-        setLastResult(score);
-        resolve(score);
+        setLastResult(calculatedScore);
+        resolve(calculatedScore);
       };
 
       recognition.onend = () => setIsRecognizing(false);

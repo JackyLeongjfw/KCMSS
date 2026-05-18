@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { User } from 'firebase/auth';
 import { UserProfile } from '../types';

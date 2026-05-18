@@ -71,7 +71,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
     });
 
     return () => unsubscribe();
-  }, [profile?.id]);
+  }, [profile]);
 
   if (!profile) return null;
 
@@ -92,7 +92,7 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
         });
         setIsAuthorized(true);
         toast.success("Voucher accepted! One-time access granted.");
-      } catch (error) {
+      } catch {
         toast.error("Authorization failed.");
       }
       return;
