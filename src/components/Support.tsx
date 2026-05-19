@@ -120,7 +120,7 @@ export default function Support({ profile }: SupportProps) {
 
         <div className="mt-8 pt-8 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-400 font-medium italic">
-            Direct Email: a223402770@gmail.com
+            Direct Email: jacky@lstkcmss.edu.hk
           </p>
         </div>
       </div>

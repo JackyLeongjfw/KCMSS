@@ -3,12 +3,11 @@ import { UserProfile, VocabCard } from '../types';
 import vocabData from '../data/vocab_master.json';
 import { generateQuiz } from '../lib/quizUtils';
 import { usePronunciation } from '../hooks/usePronunciation';
-import { Volume2, CheckCircle2, XCircle } from 'lucide-react';
+import { Volume2, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import toast from 'react-hot-toast';
 import { useMissions } from '../hooks/useMissions';
 
 interface QuizGameProps {
@@ -22,11 +21,13 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(15);
+  const [timeLeft, setTimeLeft] = useState(() => (mode < 2 ? 10 : 15));
   const [answered, setAnswered] = useState(false);
   const [userAnswer, setUserAnswer] = useState('');
   const [lastPoints, setLastPoints] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [quizFinished, setQuizFinished] = useState(false);
+  const [wrongAnswers, setWrongAnswers] = useState<{question: string, correct: string, user: string}[]>([]);
   
   const { speak } = usePronunciation();
   const { updateMissionProgress } = useMissions(profile);
@@ -39,13 +40,17 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   }, [theme, mode, profile]);
 
   const stopTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   }, []);
 
-  const handleFinish = useCallback(async () => {
+  const handleFinish = useCallback(async (finalCorrect?: number, finalScore?: number) => {
     if (!profile) return;
-    const scorePercent = Math.round((correctCount / (questions.length || 1)) * 100);
-    const passed = scorePercent >= 80;
+    const count = finalCorrect !== undefined ? finalCorrect : correctCount;
+    const totalPoints = finalScore !== undefined ? finalScore : score;
+    const scorePercent = Math.round((count / (questions.length || 1)) * 100);
 
     try {
       // Mission Progress: Quiz
@@ -56,33 +61,29 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         
         const newProgress = { ...(profile.themeProgress || {}) };
         const themeLevels = [...(newProgress[theme] || Array(5).fill(0))];
-        themeLevels[mode] = Math.max(themeLevels[mode], scorePercent);
+        themeLevels[mode] = Math.max(themeLevels[mode] || 0, scorePercent);
         newProgress[theme] = themeLevels;
 
-        const accuracyBonus = scorePercent === 100 ? 10 : scorePercent >= 80 ? 5 : 0;
-        const totalPoints = score + accuracyBonus;
+        // Use the accumulated score + perfection bonus
+        const accuracyBonus = scorePercent === 100 ? 10 : 0;
+        const totalPointsEarned = totalPoints + accuracyBonus;
         
-        // XP calculation: 1 XP per point
-        const totalXP = (profile.xp || 0) + totalPoints;
-        // Level logic: Level = Floor(Sqrt(XP/100)) + 1
+        const totalXP = (profile.xp || 0) + totalPointsEarned;
         const newLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1;
 
-        if (accuracyBonus > 0) toast.success(`Quiz Complete! +${accuracyBonus} Accuracy Bonus ✨`);
-
         await updateDoc(userRef, {
-          total_score: increment(totalPoints),
+          total_score: increment(totalPointsEarned),
           xp: totalXP,
           level: newLevel,
           themeProgress: newProgress
         });
       }
-
-      toast.success(passed ? "Level Passed with 80%+! 🎉" : `Score: ${scorePercent}%. Need 80% to unlock next level.`);
+      setQuizFinished(true);
     } catch (error) {
       console.error(error);
+      setQuizFinished(true);
     }
-    onFinish();
-  }, [profile, correctCount, questions.length, updateMissionProgress, score, theme, mode, onFinish]);
+  }, [profile, correctCount, questions.length, updateMissionProgress, theme, mode, score]);
 
   const handleAnswer = useCallback(async (answer: string) => {
     if (answered) return;
@@ -93,8 +94,14 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     const q = questions[currentIndex];
     const isCorrect = answer.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
 
+    let newCount = correctCount;
+    let newScore = score;
+
     if (isCorrect) {
-      const pointsPerQuestion = 4;
+      const pointsPerQuestion = 10;
+      
+      newCount = correctCount + 1;
+      newScore = score + pointsPerQuestion;
       
       setScore(s => s + pointsPerQuestion);
       setCorrectCount(c => c + 1);
@@ -104,6 +111,11 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
     } else {
       setStreak(0);
       setLastPoints(0);
+      setWrongAnswers(prev => [...prev, {
+        question: q.questionText,
+        correct: q.correctAnswer,
+        user: answer || '(Timed out)'
+      }]);
     }
 
     // Auto next after delay
@@ -114,10 +126,10 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
         setUserAnswer('');
         setTimeLeft(mode < 2 ? 10 : 15);
       } else {
-        handleFinish();
+        handleFinish(newCount, newScore);
       }
     }, 2000);
-  }, [answered, stopTimer, questions, currentIndex, mode, updateMissionProgress, handleFinish]);
+  }, [answered, stopTimer, questions, currentIndex, updateMissionProgress, handleFinish, correctCount, score]);
 
   const startTimer = useCallback(() => {
     stopTimer();
@@ -133,26 +145,98 @@ export default function QuizGame({ profile, theme, mode, onFinish }: QuizGamePro
   }, [stopTimer, handleAnswer]);
 
   useEffect(() => {
-    if (questions.length > 0 && !answered) {
-      setTimeLeft(prev => {
-        const nextTime = mode < 2 ? 10 : 15;
-        return prev === nextTime ? prev : nextTime;
-      });
-      startTimer();
+    if (questions.length > 0 && !quizFinished) {
+      if (!answered) {
+        // Reset timer exactly when a new question becomes active or mode changes
+        startTimer();
+      } else {
+        stopTimer();
+      }
       
-      // Auto-play audio for dictation mode only
-      if (mode === 2) {
-        const timer = setTimeout(() => speak(questions[currentIndex].correctAnswer), 500);
+      // Auto-play audio for dictation level (Level 3 or Level 4)
+      if (mode >= 2 && !answered) {
+        const audioTimer = setTimeout(() => speak(questions[currentIndex].correctAnswer), 500);
         return () => {
-          stopTimer();
-          clearTimeout(timer);
+          clearTimeout(audioTimer);
         };
       }
     }
     return () => stopTimer();
-  }, [currentIndex, questions, answered, mode, speak, startTimer]);
+  }, [currentIndex, questions, answered, mode, speak, startTimer, stopTimer, quizFinished]);
 
   if (!profile || questions.length === 0) return null;
+
+  if (quizFinished) {
+    const scorePercent = Math.round((correctCount / questions.length) * 100);
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col h-full items-center justify-center space-y-8 py-8"
+      >
+        <div className="text-center space-y-2">
+          <div className="text-6xl mb-4">
+            {scorePercent === 100 ? '👑' : scorePercent >= 80 ? '🎉' : '📚'}
+          </div>
+          <h2 className="text-3xl font-black text-slate-800">Quiz Complete!</h2>
+          <p className="text-slate-500 font-medium">Great effort on {theme}</p>
+        </div>
+
+        <div className="bg-white rounded-3xl p-8 border-2 border-slate-100 shadow-xl w-full max-w-sm text-center relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-600"></div>
+          <div className="space-y-6">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Final Score</p>
+              <p className="text-5xl font-black text-indigo-600">{score.toLocaleString()}</p>
+              {scorePercent === 100 && (
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mt-1">
+                  ✨ +10 Perfection Bonus! ✨
+                </p>
+              )}
+            </div>
+            <div className="flex justify-around items-center border-t border-slate-50 pt-6">
+              <div className="text-center">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Correct</p>
+                <p className="text-xl font-bold text-emerald-600">{correctCount}</p>
+              </div>
+              <div className="w-px h-8 bg-slate-100"></div>
+              <div className="text-center">
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Accuracy</p>
+                <p className="text-xl font-bold text-indigo-600">{scorePercent}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {wrongAnswers.length > 0 && (
+          <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-red-50 px-4 py-2 border-b border-red-100">
+              <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Review Corrections ({wrongAnswers.length})</p>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto divide-y divide-slate-50">
+              {wrongAnswers.map((item, idx) => (
+                <div key={idx} className="p-3 text-left">
+                  <p className="text-xs font-bold text-slate-800 mb-1">{item.question}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-red-400 uppercase line-through">{item.user}</span>
+                    <ChevronRight className="h-2 w-2 text-slate-300" />
+                    <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded">{item.correct}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onFinish}
+          className="w-full max-w-sm py-5 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-lg shadow-indigo-100 hover:scale-[1.02] active:scale-95 transition-all"
+        >
+          Finish & Return
+        </button>
+      </motion.div>
+    );
+  }
 
   const currentQ = questions[currentIndex];
   const isCorrect = userAnswer.toLowerCase().trim() === currentQ.correctAnswer.toLowerCase().trim();

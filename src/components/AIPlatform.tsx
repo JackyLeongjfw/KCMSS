@@ -46,7 +46,9 @@ export default function AIPlatform({ profile }: AIPlatformProps) {
 
   useEffect(() => {
     if (!profile || profile.id === 'guest_user') {
-      setHistory(prev => prev.length > 0 ? [] : prev);
+      if (history.length > 0) {
+        setTimeout(() => setHistory([]), 0);
+      }
       return;
     }
 

@@ -73,7 +73,7 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
 
         <div className="grid grid-cols-1 gap-3">
           {modes.map((mode, mIdx) => {
-            const locked = isLocked(selectedTheme, mIdx);
+            const locked = isLocked();
             const score = getThemeProgress(selectedTheme)[mIdx] || 0;
             return (
               <button
@@ -101,12 +101,22 @@ export default function ThemeSelection({ profile, onSelect }: ThemeSelectionProp
                     <div className="flex items-center gap-2 mt-0.5">
                       <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest">{mode.diff}</p>
                       {score > 0 && (
-                        <div className="h-1 w-1 bg-slate-300 rounded-full" />
-                      )}
-                      {score > 0 && (
-                        <p className={cn("text-[9px] font-black", score >= 80 ? "text-emerald-500" : "text-amber-500")}>
-                          BEST: {score}%
-                        </p>
+                        <div className="flex items-center gap-1 ml-1.5 translate-y-[1px]">
+                          {[1, 2, 3].map((star) => {
+                            const isEarned = (star === 1 && score >= 60) || 
+                                             (star === 2 && score >= 80) || 
+                                             (star === 3 && score >= 99);
+                            return (
+                              <Star 
+                                key={star} 
+                                className={cn(
+                                  "h-3.5 w-3.5 transition-all duration-300", 
+                                  isEarned ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.4)]" : "text-slate-200 fill-slate-100"
+                                )} 
+                              />
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>

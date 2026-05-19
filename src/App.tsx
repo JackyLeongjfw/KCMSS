@@ -304,7 +304,7 @@ export default function App() {
       <main className="flex-1 max-w-lg mx-auto w-full">
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
+            key={activeTab + (activeTab === 'profile' ? (profile?.id || '') : '')}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}

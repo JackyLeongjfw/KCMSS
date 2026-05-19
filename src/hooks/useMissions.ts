@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { UserProfile, DailyMission } from '../types';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -33,7 +33,7 @@ export function useMissions(profile: UserProfile | null) {
     }
   }, [profile?.id]);
 
-  const updateMissionProgress = async (type: DailyMission['type'], amount: number = 1) => {
+  const updateMissionProgress = useCallback(async (type: DailyMission['type'], amount: number = 1) => {
     if (!profile || !profile.missions || profile.id === 'guest_user') return 0;
 
     let updatedMissions = [...profile.missions];
@@ -64,7 +64,7 @@ export function useMissions(profile: UserProfile | null) {
       return pointsEarned;
     }
     return 0;
-  };
+  }, [profile]);
 
   return { updateMissionProgress };
 }

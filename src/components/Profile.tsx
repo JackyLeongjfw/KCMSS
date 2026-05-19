@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { db } from '../lib/firebase';
 import { User } from 'firebase/auth';
 import { UserProfile } from '../types';
@@ -19,9 +19,9 @@ interface ProfileProps {
 
 export default function Profile({ user, profile, isSetup, onComplete, onSignOut }: ProfileProps) {
   const [form, setForm] = useState({
-    englishName: '',
-    className: '',
-    classNo: '',
+    englishName: profile?.englishName || user.displayName || '',
+    className: profile?.className || '',
+    classNo: profile?.classNo || '',
   });
   const [saving, setSaving] = useState(false);
   const [equippingId, setEquippingId] = useState<string | null>(null);
@@ -69,24 +69,6 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
       setEquippingId(null);
     }
   };
-
-  useEffect(() => {
-    if (profile) {
-      setForm(prev => {
-        if (prev.englishName === (profile.englishName || user.displayName || '') && 
-            prev.className === (profile.className || '') && 
-            prev.classNo === (profile.classNo || '')) return prev;
-        
-        return {
-          englishName: profile.englishName || user.displayName || '',
-          className: profile.className || '',
-          classNo: profile.classNo || '',
-        };
-      });
-    } else if (user.displayName && !form.englishName) {
-      setForm(prev => prev.englishName ? prev : ({ ...prev, englishName: user.displayName || '' }));
-    }
-  }, [profile, user.displayName, user.uid, form.englishName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -309,6 +291,7 @@ export default function Profile({ user, profile, isSetup, onComplete, onSignOut 
           </div>
           <ChevronRight className="h-4 w-4 text-slate-300" />
         </button>
+        
         <button 
           onClick={onSignOut}
           className="w-full px-6 py-5 flex items-center justify-between hover:bg-red-50 transition-colors group"

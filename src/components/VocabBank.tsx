@@ -23,10 +23,6 @@ const themeSort = (a: string, b: string) => {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 };
 
-const numericalSort = (a: string, b: string) => {
-  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-};
-
 export default function VocabBank({ profile }: RevisionCenterProps) {
   const [editingCard, setEditingCard] = useState<VocabCard | null>(null);
   const [sessionPage, setSessionPage] = useState<'list' | 'config' | 'session'>('list');
@@ -80,11 +76,14 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     const mergedMap = new Map<string, VocabCard>();
     
     // Fill with master first
-    master.forEach(card => mergedMap.set(card.word.toLowerCase(), card));
+    master.forEach(card => {
+      const key = `${card.theme}-${card.section || 'General'}-${card.word.toLowerCase()}-${card.partOfSpeech.toLowerCase()}`;
+      mergedMap.set(key, card);
+    });
     
     // Override with user edits / deletions
     userVocab.forEach(card => {
-      const key = card.word.toLowerCase();
+      const key = `${card.theme}-${card.section || 'General'}-${card.word.toLowerCase()}-${card.partOfSpeech.toLowerCase()}`;
       // If the user word is marked as deleted, remove it from the map if it was a master word
       // or just don't add it if it was a custom word
       if (card.familiarity === 'deleted' || (card as unknown as { isDeleted?: boolean }).isDeleted) {
@@ -109,6 +108,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
     return data;
   }, [combinedVocab]);
 
+  // Sort themes logically (S4M1, S4M2...)
   const sortedThemes = Object.keys(groupedData).sort(themeSort);
 
   const toggleTheme = (theme: string) => {
@@ -121,10 +121,9 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   );
 
   const startConfig = () => {
-    const allThemes = Array.from(new Set(combinedVocab.map(v => v.theme)));
     const allSections = Array.from(new Set(combinedVocab.map(v => v.section || 'General')));
     setSessionConfig({
-      themes: allThemes,
+      themes: [],
       sections: allSections,
       count: 10
     });
@@ -132,14 +131,14 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   };
 
   const availableCount = combinedVocab.filter(v => 
-    (sessionConfig.themes.length === 0 || sessionConfig.themes.includes(v.theme)) &&
-    (sessionConfig.sections.length === 0 || sessionConfig.sections.includes(v.section || 'General'))
+    (sessionConfig.themes.length > 0 && sessionConfig.themes.includes(v.theme)) &&
+    (sessionConfig.sections.length > 0 && sessionConfig.sections.includes(v.section || 'General'))
   ).length;
 
   const startSession = () => {
     const filtered = combinedVocab.filter(v => 
-      (sessionConfig.themes.length === 0 || sessionConfig.themes.includes(v.theme)) &&
-      (sessionConfig.sections.length === 0 || sessionConfig.sections.includes(v.section || 'General'))
+      (sessionConfig.themes.length > 0 && sessionConfig.themes.includes(v.theme)) &&
+      (sessionConfig.sections.length > 0 && sessionConfig.sections.includes(v.section || 'General'))
     ).sort(() => Math.random() - 0.5);
     
     // Take as many as available up to the count
@@ -158,7 +157,8 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
   const updateFamiliarity = async (card: VocabCard, status: 'forgot' | 'mastered') => {
     if (profile.id === 'guest_user') return;
     try {
-      const vocabRef = doc(db, 'users', profile.id, 'vocabulary', card.word.toLowerCase());
+      const safeId = `${card.theme}-${card.section || 'General'}-${card.word.toLowerCase()}-${card.partOfSpeech.toLowerCase()}`.replace(/\//g, '_');
+      const vocabRef = doc(db, 'users', profile.id, 'vocabulary', safeId);
       await setDoc(vocabRef, {
         ...card,
         familiarity: status,
@@ -166,7 +166,11 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
       }, { merge: true });
       
       setUserVocab(prev => {
-        const idx = prev.findIndex(v => v.word.toLowerCase() === card.word.toLowerCase());
+        const key = `${card.theme}-${card.section || 'General'}-${card.word.toLowerCase()}-${card.partOfSpeech.toLowerCase()}`.replace(/\//g, '_');
+        const idx = prev.findIndex(v => {
+          const vKey = `${v.theme}-${v.section || 'General'}-${v.word.toLowerCase()}-${v.partOfSpeech.toLowerCase()}`.replace(/\//g, '_');
+          return vKey === key;
+        });
         if (idx >= 0) {
           const updated = [...prev];
           updated[idx] = { ...updated[idx], familiarity: status };
@@ -206,7 +210,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{availableCount} available</span>
             </div>
             <div className="flex gap-2">
-              {[5, 10, 20, 50].map(n => (
+              {[10, 20, 50, 100].map(n => (
                 <button
                   key={n}
                   onClick={() => setSessionConfig(prev => ({ ...prev, count: n }))}
@@ -246,7 +250,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Filter by Module</label>
             <div className="space-y-1 max-h-40 overflow-y-auto px-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50 text-[11px] font-bold text-slate-700">
-              {Array.from(new Set(combinedVocab.filter(v => sessionConfig.themes.includes(v.theme)).map(v => v.section || 'General'))).sort(numericalSort).map(section => (
+              {Array.from(new Set(combinedVocab.filter(v => sessionConfig.themes.includes(v.theme)).map(v => v.section || 'General'))).map(section => (
                 <label key={section} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white cursor-pointer transition-colors">
                   <input 
                     type="checkbox" 
@@ -346,7 +350,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
       <div className="space-y-4">
         {search ? (
           <div className="space-y-2">
-            {filteredData.sort((a,b) => themeSort(a.theme, b.theme)).map((card, idx) => (
+            {filteredData.map((card, idx) => (
               <VocabItem 
                 key={card.id || card.word} 
                 index={idx + 1}
@@ -360,7 +364,7 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
         ) : (
           sortedThemes.map((theme) => {
             const sections = groupedData[theme];
-            const sortedSections = Object.keys(sections).sort(numericalSort);
+            const sortedSections = Object.keys(sections);
             return (
               <div key={theme} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
                 <button
@@ -393,14 +397,10 @@ export default function VocabBank({ profile }: RevisionCenterProps) {
                               onClick={() => setExpandedSections(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
                               className="w-full flex items-center justify-between px-1 border-b border-slate-50 pb-2 hover:bg-slate-50/50 transition-colors group/sec"
                             >
-                              <h5 className="text-[10px] font-black text-indigo-700 uppercase tracking-widest italic flex items-center gap-1">
+                              <h5 className="flex-1 text-[10px] font-black text-indigo-700 uppercase tracking-widest italic flex items-center gap-1">
                                 <ChevronDown className={cn("h-3 w-3 transition-transform duration-200", !isSectionExpanded && "-rotate-90")} />
                                 {section}
-                                <span className="ml-2 text-[8px] text-slate-300 normal-case font-bold">({sectionCards.length} words)</span>
                               </h5>
-                              <div className="text-[8px] font-black text-slate-300 opacity-0 group-hover/sec:opacity-100 uppercase tracking-widest">
-                                {isSectionExpanded ? 'Click to collapse' : 'Click to expand'}
-                              </div>
                             </button>
                             
                             {isSectionExpanded && (
@@ -526,17 +526,12 @@ function VocabItem({ card, index, speak, isSynthesizing, onEdit }: {
             <span className="text-[8px] text-slate-400 font-serif font-black uppercase tracking-tighter opacity-80 px-1.5 py-0.5 border border-slate-200 rounded">
               {card.partOfSpeech}
             </span>
-            {card.isMaster && (
-              <span className="text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
-                Master
-              </span>
-            )}
             {card.familiarity && (
                <span className={cn(
                  "text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest",
                  card.familiarity === 'mastered' ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
                )}>
-                 {card.familiarity === 'mastered' ? 'Mastered' : 'Hard'}
+                 {card.familiarity === 'mastered' ? 'Revised' : 'Hard'}
                </span>
             )}
           </div>
